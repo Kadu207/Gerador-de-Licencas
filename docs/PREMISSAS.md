@@ -1,6 +1,6 @@
 # Premissas do Gerenciador de Licenças InovatiTech
 
-Documento vivo de decisões arquiteturais e de negócio.
+Documento vivo de decisões arquiteturais e de negócio. **Fonte de verdade do projeto** — consultar antes de implementar.
 
 ## Produtos suportados
 
@@ -10,7 +10,27 @@ Documento vivo de decisões arquiteturais e de negócio.
 | `lab` | Dental Lab |
 | `vde` | VDE Incorporadora |
 
-> **Licenças independentes:** cada software exige sua própria chave. Não há pacote compartilhado Cloud+Lab.
+> **Licenças independentes:** cada software exige sua própria chave. Não há pacote compartilhado.
+
+## Banco de dados (Postgres dedicado)
+
+| Item | Valor |
+|------|-------|
+| Container | `licencas-db` |
+| Imagem | `postgres:16-alpine` |
+| Porta host | `127.0.0.1:5436` (5433 ocupada pelo Dental Lab local) |
+| Database | `licencas_db` |
+| Superusuário (VPS opcional) | `postgres` — senha em `POSTGRES_SUPER_PASSWORD` |
+| Usuário app | `licencas` (owner de `licencas_db`) — senha em `POSTGRES_APP_PASSWORD` |
+| URL app | `LOCAL_DATABASE_URL` no `.env` — senha com `$` usa `%24` na URL |
+| Migrações | Alembic (`alembic upgrade head`) |
+| Setup | `.\tools\setup-db.ps1` recria volume e aplica schema |
+
+### Tabelas
+
+`operators`, `clients`, `client_addresses`, `license_records`, `license_alert_log`, `notifications`, `payments`, `invoices_nfse`, `audit_logs`
+
+> Senhas **nunca** commitadas — apenas em `.env` (gitignore).
 
 ## Períodos de licença
 
@@ -26,37 +46,20 @@ Documento vivo de decisões arquiteturais e de negócio.
 ## Duas linhas do tempo (bloqueio)
 
 1. **Validade técnica (`ends_at`)** — bloqueio nos softwares no dia seguinte ao vencimento.
-2. **Pagamento comercial (`payment_due_at` + 30 dias)** — fase `grace`/`blocked` com alertas de cobrança.
+2. **Pagamento comercial (`payment_due_at` + 30 dias)** — fase `grace`/`blocked`.
 
 ## API como fonte da verdade
 
-- `SYNC_REMOTE_ENABLED=false` por padrão em produção.
-- Produtos consultam `https://licencas.inovatitech.com.br/api/v1/licenses/*`.
-- Sync push para ERP/Lab é legado opcional.
+- `SYNC_REMOTE_ENABLED=false` por padrão.
+- Base: `https://licencas.inovatitech.com.br/api/v1/licenses/*`
 
-## Alertas
+## GitHub
 
-Marcos: 20, 15, 7, 3, 2, 1 dias antes de `ends_at` — e-mail + notificação in-app.
-
-## Pagamentos
-
-- Stripe Checkout (cartão, PIX, boleto via Dashboard Brasil).
-- Planos: mensal, semestral, anual.
-- Webhook `checkout.session.completed` estende `payment_due_at`.
-
-## NFS-e
-
-Integração direta com API da prefeitura (adapter stub até credenciais).
-
-## Deploy
-
-- VPS: `/opt/gerador-licencas`
-- Postgres dedicado no Docker (`license-db`)
-- Cloudflare: SSL Full (strict), proxy laranja
-- GitHub: `kadu207/Gerenciador-de-Licenas`
+- Remoto: `git@github.com:kadu207/Gerador-de-Licencas.git`
+- Push exige chave SSH cadastrada em https://github.com/settings/keys
+- Alternativa HTTPS: `git remote set-url origin https://github.com/kadu207/Gerador-de-Licencas.git`
 
 ## Segurança
 
 - `.env` nunca commitado
-- `PRODUCT_API_KEY` comparada com `hmac.compare_digest`
-- JWT HttpOnly + secure + sameSite=lax
+- `PRODUCT_API_KEY` com `hmac.compare_digest`

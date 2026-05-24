@@ -186,7 +186,8 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 def init_db() -> None:
     if settings.local_database_url.startswith("sqlite"):
         os.makedirs("data", exist_ok=True)
-    Base.metadata.create_all(bind=engine)
+        Base.metadata.create_all(bind=engine)
+    # Postgres: schema via Alembic (alembic upgrade head)
 
 
 def get_db():
