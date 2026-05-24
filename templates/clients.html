@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Clientes — Gerenciador de Licenças</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">Gerenciador de Licenças · InovatiTech</div>
+    <nav>
+      <a href="/dashboard">Dashboard</a>
+      <a href="/clients">Clientes</a>
+      <a href="/logout">Sair</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <h1>Clientes</h1>
+    <p class="subtitle">Cadastro completo — cada software (Cloud, Lab, VDE) exige licença independente.</p>
+
+    <div class="card">
+      <h2>Novo cliente</h2>
+      <form method="post" action="/clients">
+        <div class="grid-2">
+          <div><label>Nome fantasia *</label><input name="nome" required /></div>
+          <div><label>Razão social</label><input name="razao_social" /></div>
+          <div>
+            <label>Tipo documento</label>
+            <select name="document_type" id="document_type">
+              <option value="cnpj">CNPJ</option>
+              <option value="cpf">CPF</option>
+            </select>
+          </div>
+          <div>
+            <label>CPF / CNPJ</label>
+            <div style="display:flex;gap:8px">
+              <input id="document_field" name="cnpj" data-mask="cnpj" style="flex:1" />
+              <button type="button" id="cnpj_lookup" class="btn btn-secondary">Consultar RF</button>
+            </div>
+          </div>
+          <div><label>E-mail 01</label><input name="email" type="email" /></div>
+          <div><label>E-mail 02</label><input name="email_02" type="email" /></div>
+          <div><label>Telefone 01</label><input name="telefone" data-mask="phone" /></div>
+          <div><label>Telefone 02</label><input name="telefone_02" data-mask="phone" /></div>
+          <div><label>Telefone 03</label><input name="telefone_03" data-mask="phone" /></div>
+          <div>
+            <label>Matriz (filial de)</label>
+            <select name="parent_client_id">
+              <option value="">— Matriz —</option>
+              {% for p in parent_options %}
+              <option value="{{ p.id }}">{{ p.nome }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div><label>Clínica ID (ERP)</label><input name="clinica_id_erp" placeholder="Ex: 1" /></div>
+          <div><label>Clínica ID (Lab)</label><input name="clinica_id_lab" placeholder="Opcional" /></div>
+        </div>
+
+        <h3 style="margin:1.5rem 0 0.75rem">Endereço</h3>
+        <div class="grid-2">
+          <div><label>CEP</label><input name="cep" id="cep" data-mask="cep" /></div>
+          <div><label>UF</label><input name="uf" id="uf" maxlength="2" /></div>
+          <div style="grid-column:1/-1"><label>Logradouro</label><input name="logradouro" id="logradouro" /></div>
+          <div><label>Número</label><input name="numero" /></div>
+          <div><label>Complemento</label><input name="complemento" /></div>
+          <div><label>Bairro</label><input name="bairro" id="bairro" /></div>
+          <div><label>Cidade</label><input name="cidade" id="cidade" /></div>
+          <div style="grid-column:1/-1"><label>Observações</label><textarea name="notes"></textarea></div>
+        </div>
+        <div class="actions"><button class="btn btn-primary" type="submit">Cadastrar cliente</button></div>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Clientes cadastrados</h2>
+      <table>
+        <thead>
+          <tr><th>Nome</th><th>Documento</th><th>Clínica ERP</th><th>Status</th><th></th></tr>
+        </thead>
+        <tbody>
+          {% for c in clients %}
+          <tr>
+            <td>
+              <strong>{{ c.nome }}</strong>
+              {% if c.parent_client_id %}<br><span class="badge">Filial</span>{% endif %}
+              <br><span style="font-size:12px;color:#605e5c">{{ c.email }}</span>
+            </td>
+            <td>{{ c.cnpj or c.cpf or '—' }}</td>
+            <td>{{ c.clinica_id_erp or '—' }}</td>
+            <td>{{ c.status }}</td>
+            <td><a href="/clients/{{ c.id }}">Abrir</a></td>
+          </tr>
+          {% else %}
+          <tr><td colspan="5">Nenhum cliente cadastrado.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </main>
+  <script src="/static/masks.js"></script>
+</body>
+</html>

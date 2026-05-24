@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard — Gerenciador de Licenças</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">Gerenciador de Licenças · InovatiTech</div>
+    <nav>
+      <a href="/dashboard">Dashboard</a>
+      <a href="/clients">Clientes</a>
+      <a href="/logout">Sair</a>
+    </nav>
+  </header>
+
+  <main class="container dashboard">
+    <div class="dash-header">
+      <div>
+        <h1>Dashboard</h1>
+        <p class="subtitle">Olá, {{ user.nome or user.username }}. Visão geral de licenças, pagamentos e inadimplência.</p>
+      </div>
+      <form method="post" action="/admin/sync-all">
+        <button class="btn btn-secondary" type="submit">Sincronizar licenças</button>
+      </form>
+    </div>
+
+    {% set k = stats.kpis %}
+    <section class="kpi-grid">
+      <div class="stat stat-blue"><div class="value">{{ k.clients_total }}</div><div class="label">Clientes</div></div>
+      <div class="stat stat-blue"><div class="value">{{ k.licenses_total }}</div><div class="label">Licenças totais</div></div>
+      <div class="stat stat-green"><div class="value">{{ k.licenses_active }}</div><div class="label">Ativas</div></div>
+      <div class="stat stat-orange"><div class="value">{{ k.licenses_grace }}</div><div class="label">Em carência</div></div>
+      <div class="stat stat-red"><div class="value">{{ k.licenses_blocked }}</div><div class="label">Bloqueadas</div></div>
+      <div class="stat stat-muted"><div class="value">{{ k.licenses_expired }}</div><div class="label">Vencidas</div></div>
+      <div class="stat stat-green"><div class="value">R$ {{ '%.2f'|format(k.revenue_total) }}</div><div class="label">Receita efetivada</div></div>
+      <div class="stat stat-blue"><div class="value">{{ k.payments_completed }}</div><div class="label">Pagamentos confirmados</div></div>
+      <div class="stat stat-orange"><div class="value">{{ k.payments_pending }}</div><div class="label">Pagamentos pendentes</div></div>
+      <div class="stat stat-red"><div class="value">{{ k.delinquency_total }}</div><div class="label">Inadimplentes</div></div>
+    </section>
+
+    <section class="chart-grid">
+      <div class="card chart-card">
+        <h2>Licenças por software</h2>
+        <p class="chart-hint">Cada software possui licença independente.</p>
+        <canvas id="chartProducts"></canvas>
+      </div>
+      <div class="card chart-card">
+        <h2>Status operacional</h2>
+        <canvas id="chartStatus"></canvas>
+      </div>
+      <div class="card chart-card">
+        <h2>Receita mensal (pagamentos efetivados)</h2>
+        <canvas id="chartRevenue"></canvas>
+      </div>
+      <div class="card chart-card">
+        <h2>Inadimplência por software</h2>
+        <canvas id="chartDelinquency"></canvas>
+      </div>
+      <div class="card chart-card chart-wide">
+        <h2>Receita por plano de pagamento</h2>
+        <canvas id="chartPlans"></canvas>
+      </div>
+    </section>
+
+    <div class="grid-2">
+      <div class="card">
+        <h2>Inadimplência — detalhes</h2>
+        <p class="chart-hint">Carência: {{ stats.block_days }}d · Cancelamento elegível: {{ stats.cancel_days }}d após vencimento do pagamento.</p>
+        <table>
+          <thead>
+            <tr><th>Cliente</th><th>Software</th><th>Fase</th><th>Dias atraso</th><th></th></tr>
+          </thead>
+          <tbody>
+            {% for row in stats.delinquent_rows %}
+            <tr>
+              <td>{{ row.client_name }}</td>
+              <td>{{ row.product_label }}</td>
+              <td><span class="badge badge-{{ 'grace' if row.phase == 'grace' else 'blocked' }}">{{ row.phase }}</span></td>
+              <td>{{ row.days_overdue }}</td>
+              <td><a href="/clients/{{ row.client_id }}">Abrir</a></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5">Nenhuma licença inadimplente no momento.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h2>Pagamentos recentes</h2>
+        <table>
+          <thead>
+            <tr><th>Data</th><th>Valor</th><th>Plano</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            {% for p in stats.recent_payments %}
+            <tr>
+              <td>{{ p.created_at.strftime('%d/%m/%Y') if p.created_at else '—' }}</td>
+              <td>R$ {{ '%.2f'|format(p.amount or 0) }}</td>
+              <td>{{ payment_plans.get(p.payment_plan, p.payment_plan) }}</td>
+              <td>
+                <span class="badge badge-{{ 'active' if p.status == 'completed' else ('grace' if p.status == 'pending' else 'blocked') }}">
+                  {{ p.status }}
+                </span>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4">Nenhum pagamento registrado.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <h2>Licenças recentes</h2>
+        <table>
+          <thead>
+            <tr><th>Chave</th><th>Cliente</th><th>Software</th><th>Status</th><th></th></tr>
+          </thead>
+          <tbody>
+            {% for row in stats.recent_licenses %}
+            <tr>
+              <td class="mono">{{ row.license.license_key[:10] }}…</td>
+              <td>{% if row.client %}{{ row.client.nome }}{% else %}—{% endif %}</td>
+              <td>{{ products.get(row.license.produto, row.license.produto) }}</td>
+              <td>
+                <span class="badge badge-{{ 'active' if row.effective.status == 'active' else ('grace' if row.effective.status == 'grace' else 'blocked') }}">
+                  {{ row.effective.phase }}
+                </span>
+              </td>
+              <td>{% if row.client %}<a href="/clients/{{ row.client.id }}">Gerenciar</a>{% endif %}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5">Nenhuma licença emitida.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h2>Alertas do sistema ({{ k.notifications_unread }})</h2>
+        <ul class="notif-list">
+          {% for n in stats.notifications %}
+          <li class="notif-item notif-{{ n.level }}">
+            <strong>{{ n.title }}</strong>
+            <span>{{ n.message }}</span>
+            <time>{{ n.created_at.strftime('%d/%m/%Y %H:%M') if n.created_at else '' }}</time>
+          </li>
+          {% else %}
+          <li class="notif-item">Nenhum alerta pendente.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Conexões</h2>
+      <table>
+        <tr><th>Sistema</th><th>Status</th></tr>
+        <tr><td>Banco local</td><td>{{ connections.local }}</td></tr>
+        <tr><td>ERP (sync legado)</td><td>{{ connections.erp }}</td></tr>
+        <tr><td>Lab (sync legado)</td><td>{{ connections.lab }}</td></tr>
+      </table>
+    </div>
+  </main>
+
+  <script id="dashboard-data" type="application/json">{{ stats.charts | tojson }}</script>
+  <script src="/static/dashboard.js"></script>
+</body>
+</html>

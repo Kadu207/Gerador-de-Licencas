@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{ client.nome }} — Gerenciador de Licenças</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">Gerenciador de Licenças · InovatiTech</div>
+    <nav>
+      <a href="/dashboard">Dashboard</a>
+      <a href="/clients">Clientes</a>
+      <a href="/logout">Sair</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <h1>{{ client.nome }}</h1>
+    <p class="subtitle">
+      {% if parent %}Filial de <strong>{{ parent.nome }}</strong> · {% endif %}
+      Clínica ERP: {{ client.clinica_id_erp or '—' }} · Lab: {{ client.clinica_id_lab or client.clinica_id_erp or '—' }}
+      · Status: {{ client.status }}
+    </p>
+
+    <div class="card">
+      <h2>Emitir nova licença</h2>
+      <form method="post" action="/clients/{{ client.id }}/licenses">
+        <div class="grid-3">
+          <div>
+            <label>Software</label>
+            <select name="produto" required>
+              {% for key, label in products.items() %}
+              <option value="{{ key }}">{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label>Período</label>
+            <select name="periodo" required>
+              {% for key, label in periods.items() %}
+              <option value="{{ key }}">{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label>Plano pagamento</label>
+            <select name="payment_plan">
+              {% for key, label in payment_plans.items() %}
+              <option value="{{ key }}">{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div style="grid-column:1/-1"><label>Observações</label><input name="notes" /></div>
+        </div>
+        <div class="actions"><button class="btn btn-primary" type="submit">Gerar licença (25 caracteres)</button></div>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Licenças do cliente</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Chave</th>
+            <th>Produto</th>
+            <th>Período</th>
+            <th>Validade</th>
+            <th>Restante</th>
+            <th>Status</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in licenses %}
+          {% set lic = row.license %}
+          {% set eff = row.effective %}
+          <tr>
+            <td class="mono">{{ lic.license_key }}</td>
+            <td>{{ lic.produto }}</td>
+            <td>{{ lic.periodo }}</td>
+            <td>{{ lic.ends_at.strftime('%d/%m/%Y') if lic.ends_at else '—' }}</td>
+            <td>{{ eff.remainingLabel }}</td>
+            <td>
+              <span class="badge badge-{{ 'active' if eff.status == 'active' else ('grace' if eff.status == 'grace' else 'blocked') }}">{{ eff.phase }}</span>
+              <div style="font-size:12px;margin-top:4px;color:#605e5c">{{ eff.message }}</div>
+            </td>
+            <td>
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <form method="post" action="/licenses/{{ lic.id }}/renew" style="display:flex;gap:6px">
+                  <select name="periodo" style="width:auto;min-width:100px">
+                    {% for key, label in periods.items() %}
+                    <option value="{{ key }}">{{ label }}</option>
+                    {% endfor %}
+                  </select>
+                  <button class="btn btn-secondary" type="submit">Renovar</button>
+                </form>
+                {% if lic.manual_status != 'revoked' %}
+                <form method="post" action="/licenses/{{ lic.id }}/revoke" onsubmit="return confirm('Revogar esta licença?')">
+                  <input type="hidden" name="reason" value="Revogação administrativa" />
+                  <button class="btn btn-danger" type="submit">Revogar</button>
+                </form>
+                {% endif %}
+                {% if stripe_enabled and lic.manual_status != 'revoked' %}
+                <form method="post" action="/licenses/{{ lic.id }}/payment-link">
+                  <select name="payment_plan" style="width:auto;margin-bottom:4px">
+                    {% for key, label in payment_plans.items() %}
+                    <option value="{{ key }}">{{ label }}</option>
+                    {% endfor %}
+                  </select>
+                  <button class="btn btn-secondary" type="submit">Link Stripe</button>
+                </form>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="7">Nenhuma licença para este cliente.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>Inadimplência</h2>
+      <p style="font-size:14px;color:#605e5c;margin-bottom:12px">
+        Validade técnica (<code>ends_at</code>) bloqueia o software no dia seguinte ao vencimento.
+        Carência comercial de pagamento: <strong>{{ block_days }} dias</strong> após <code>payment_due_at</code>.
+        Cancelamento elegível após <strong>{{ cancel_days }} dias</strong>.
+      </p>
+      {% if client.status != 'cancelled' %}
+      <form method="post" action="/clients/{{ client.id }}/cancel" onsubmit="return confirm('Cancelar cliente e revogar licenças?')">
+        <div class="grid-2">
+          <div><label>Motivo</label><input name="reason" value="Inadimplência — cancelamento comercial" /></div>
+        </div>
+        <div class="actions"><button class="btn btn-danger" type="submit">Cancelar cliente por inadimplência</button></div>
+      </form>
+      {% else %}
+      <div class="alert alert-info">Cliente já cancelado.</div>
+      {% endif %}
+    </div>
+
+    <p><a href="/clients">← Voltar para clientes</a></p>
+  </main>
+</body>
+</html>

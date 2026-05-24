@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Dados locais e secrets
+.env
+.env.local
+.env.production
+data/
+*.db
+*.sqlite3
+
+# Certificados NFS-e
+*.pfx
+*.p12
+certs/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs e backups
+*.log
+backups/
+
+# Docker volumes locais
+license_pg_data/

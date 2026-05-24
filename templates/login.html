@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Login - Gerador de Licencas</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+  <style>
+    body { margin: 0; font-family: "Segoe UI", system-ui, sans-serif; background: #f3f2f1; color: #323130; }
+    .login-wrap {
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(135deg, #0078d4 0%, #004578 100%);
+    }
+    .login-card {
+      width: 100%; max-width: 420px; background: #fff; padding: 36px 32px;
+      border-radius: 4px; box-shadow: 0 8px 24px rgba(0,0,0,.2);
+    }
+    h1 { font-size: 22px; margin: 0 0 4px; }
+    .subtitle { color: #605e5c; margin: 0 0 24px; }
+    label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+    input {
+      width: 100%; padding: 8px 10px; border: 1px solid #8a8886;
+      border-radius: 2px; font-size: 14px; box-sizing: border-box;
+    }
+    .btn {
+      padding: 10px 16px; border: none; border-radius: 2px;
+      background: #0078d4; color: #fff; font-weight: 600; cursor: pointer; width: 100%;
+    }
+    .alert-error {
+      background: #fde7e9; color: #a4262c; padding: 10px 12px;
+      margin-bottom: 16px; border-left: 4px solid #a4262c; font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-wrap">
+    <div class="login-card">
+      <h1>Gerador de Licencas</h1>
+      <p class="subtitle">Excellence Dental Cloud e Dental Lab</p>
+      {% if error %}
+      <div class="alert-error">{{ error }}</div>
+      {% endif %}
+      <form method="post" action="/login">
+        <div style="margin-bottom:16px">
+          <label for="username">Usuario</label>
+          <input id="username" name="username" required autocomplete="username" />
+        </div>
+        <div style="margin-bottom:20px">
+          <label for="password">Senha</label>
+          <input id="password" name="password" type="password" required autocomplete="current-password" />
+        </div>
+        <button class="btn" type="submit">Entrar</button>
+      </form>
+      <p style="font-size:12px;color:#605e5c;margin-top:16px;margin-bottom:0">
+        Credencial inicial: usuario <strong>admin</strong> (senha definida no arquivo <code>.env</code>).
+      </p>
+    </div>
+  </div>
+</body>
+</html>

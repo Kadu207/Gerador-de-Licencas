@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>InovatiTech — Gerenciador de Licenças</title>
+  <link rel="stylesheet" href="/static/public/landing.css" />
+</head>
+<body>
+  <header class="hero">
+    <nav class="nav">
+      <span class="logo">InovatiTech</span>
+      <div class="nav-links">
+        <a href="/suporte">Suporte</a>
+        {% if user %}
+        <a href="/dashboard" class="btn-nav">Painel</a>
+        {% else %}
+        <a href="/app/login" class="btn-nav">Área administrativa</a>
+        {% endif %}
+      </div>
+    </nav>
+    <div class="hero-content">
+      <h1>Gerenciamento centralizado de licenças</h1>
+      <p class="lead">
+        Excellence Dental Cloud, Dental Lab e VDE Incorporadora —
+        cada software com licença independente.
+      </p>
+      <div class="hero-actions">
+        <a href="/app/login" class="btn btn-primary">Acessar painel</a>
+        <a href="/suporte" class="btn btn-secondary">Como renovar</a>
+      </div>
+    </div>
+  </header>
+
+  <section class="features">
+    <div class="feature">
+      <h3>Chaves de 25 caracteres</h3>
+      <p>Emissão segura com validação remota via API HTTPS.</p>
+    </div>
+    <div class="feature">
+      <h3>Alertas automáticos</h3>
+      <p>Notificações por e-mail em 20, 15, 7, 3, 2 e 1 dia antes do vencimento.</p>
+    </div>
+    <div class="feature">
+      <h3>Pagamentos Stripe</h3>
+      <p>Cartão, PIX e boleto com confirmação automática de renovação.</p>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <p>&copy; 2026 InovatiTech · {% if public_url %}{{ public_url }}{% else %}licencas.inovatitech.com.br{% endif %}</p>
+  </footer>
+</body>
+</html>

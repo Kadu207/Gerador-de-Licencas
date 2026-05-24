@@ -1,0 +1,15 @@
+---
+description: Convenções do Gerenciador de Licenças InovatiTech
+globs: ["**/*.py", "**/*.html", "docs/**"]
+alwaysApply: true
+---
+
+# Gerenciador de Licenças — Regras
+
+- Escopo **somente** deste repositório (não misturar com Excellence Dental monorepo).
+- API `/api/v1/licenses/*` é contrato estável para Cloud, Lab e VDE.
+- `ends_at` = validade técnica; `payment_due_at` = cobrança comercial.
+- Postgres dedicado em produção; SQLite apenas dev local.
+- Nunca commitar `.env`, certificados ou secrets.
+- Stripe: sem `payment_method_types` fixo — usar Dashboard Brasil.
+- NFS-e: adapter prefeitura; aguardar credenciais do usuário.
