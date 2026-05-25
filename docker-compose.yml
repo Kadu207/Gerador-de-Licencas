@@ -11,7 +11,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: licencas
-      POSTGRES_PASSWORD: ${POSTGRES_APP_PASSWORD}
+      POSTGRES_PASSWORD: ${POSTGRES_APP_PASSWORD:?Defina POSTGRES_APP_PASSWORD no arquivo .env}
       POSTGRES_DB: licencas_db
     volumes:
       - license_pg_data:/var/lib/postgresql/data
@@ -35,7 +35,12 @@ services:
     environment:
       LICENSE_SERVER_HOST: 0.0.0.0
       LICENSE_SERVER_PORT: 8195
-      LOCAL_DATABASE_URL: postgresql+psycopg://licencas:${POSTGRES_APP_PASSWORD}@license-db:5432/licencas_db
+      POSTGRES_HOST: license-db
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: licencas
+      POSTGRES_DB: licencas_db
+      POSTGRES_APP_PASSWORD: ${POSTGRES_APP_PASSWORD}
+      # LOCAL_DATABASE_URL é montada no entrypoint (senha URL-encoded, host license-db)
     ports:
       - "127.0.0.1:${LICENSE_SERVER_PORT:-8195}:8195"
     volumes:
