@@ -21,6 +21,7 @@ Use `product=vde` em todas as chamadas.
 
 ## Checklist
 
-- [ ] Implementar cliente HTTP com retry
-- [ ] Respeitar `validForSoftware` / `licenseExpired`
-- [ ] Exibir alertas conforme `alertLevel`
+- [x] Implementar cliente HTTP com retry (`VDE Incorporadora/backend/licensing/license_client.py`)
+- [x] Respeitar `validForSoftware` / `licenseExpired`
+- [x] Exibir alertas conforme `alertLevel`
+- [x] Copiar módulo para repositório VDE — `backend/licensing/` em https://github.com/Kadu207/vde-incorporadora

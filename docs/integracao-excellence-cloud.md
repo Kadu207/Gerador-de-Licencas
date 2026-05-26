@@ -31,6 +31,7 @@ Poll `GET /heartbeat?license_key=...&product=cloud` a cada 6–24h para detectar
 
 ## Checklist
 
-- [ ] Remover dependência de sync push local
-- [ ] Usar `daysRemaining` e `licenseExpired` da API
-- [ ] Tratar `alertLevel` warning/critical
+- [x] Remover dependência de sync push local
+- [x] Usar `daysRemaining` e `licenseExpired` da API
+- [x] Tratar `alertLevel` warning/critical
+- [x] Cliente `license_remote.py` + heartbeat 6h

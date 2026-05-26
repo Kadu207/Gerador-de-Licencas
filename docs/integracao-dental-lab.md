@@ -27,6 +27,7 @@ httpx.post(f"{BASE}/activate", json={
 
 ## Checklist
 
-- [ ] Migrar de `product_licenses` local para API central
-- [ ] Cache 5 min opcional
+- [x] Migrar de `product_licenses` local para API central (híbrido: remoto + cache local)
+- [x] Cache 5 min opcional
+- [x] Heartbeat 6h + retry com backoff
 - [ ] Fallback offline apenas leitura (opcional)

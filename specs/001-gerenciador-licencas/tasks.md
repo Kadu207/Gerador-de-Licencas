@@ -27,6 +27,9 @@
 - [x] heartbeat + revoke API
 - [x] SYNC_REMOTE_ENABLED=false default
 - [x] Guias integração 3 MD
+- [x] Cliente remoto Dental Lab (retry, cache, heartbeat)
+- [x] Cliente remoto Excellence Cloud (license_remote.py)
+- [x] Pacote drop-in VDE (`vde-incorporadora-license/`)
 
 ## Fase 4 ✅
 - [x] Stripe Checkout
