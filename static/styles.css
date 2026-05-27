@@ -33,7 +33,7 @@ a:hover { text-decoration: underline; }
   justify-content: space-between;
 }
 .topbar .brand { font-weight: 600; font-size: 15px; display: inline-flex; align-items: center; gap: 8px; }
-.brand-icon { width: 22px; height: 22px; border-radius: 4px; }
+.brand-icon { width: 28px; height: 28px; border-radius: 6px; object-fit: cover; }
 .topbar nav a { color: #fff; margin-left: 20px; font-size: 14px; opacity: 0.95; }
 
 .container { max-width: 1200px; margin: 24px auto; padding: 0 20px 40px; }
@@ -127,7 +127,9 @@ th { background: #faf9f8; font-weight: 600; }
   box-shadow: 0 8px 24px rgba(0,0,0,.2);
 }
 .login-brand { text-align: center; margin-bottom: 24px; }
-.login-logo { width: 56px; height: 56px; border-radius: 12px; margin-bottom: 12px; }
+.login-logo { width: 64px; height: 64px; border-radius: 12px; object-fit: cover; margin-bottom: 12px; }
+.login-footer { text-align: center; margin-top: 1rem; font-size: 13px; }
+.login-footer a { color: var(--ms-muted); }
 .login-brand h1 { font-size: 24px; margin: 0 0 4px; text-align: center; }
 .login-subtitle { color: var(--ms-muted); margin: 0; text-align: center; font-size: 14px; }
 .login-page .field { margin-bottom: 16px; }
