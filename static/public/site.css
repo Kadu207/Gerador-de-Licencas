@@ -483,6 +483,99 @@ a { color: inherit; }
   .hero-split__actions .btn { width: 100%; }
 }
 
+/* ── Catálogo de sistemas (landing) ── */
+.catalog {
+  padding: 4rem 0 3rem;
+  background: linear-gradient(180deg, var(--bg) 0%, var(--surface) 100%);
+}
+
+.catalog__header {
+  text-align: center;
+  max-width: 640px;
+  margin: 0 auto 2.5rem;
+}
+
+.catalog__header h2 {
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  margin-bottom: 0.75rem;
+}
+
+.catalog__header p {
+  color: var(--muted);
+  font-size: 1.05rem;
+}
+
+.catalog__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+  gap: 1.25rem;
+}
+
+.catalog-card {
+  background: var(--surface-2);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius);
+  padding: 1.35rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.catalog-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.catalog-card__head h3 {
+  font-size: 1.1rem;
+  line-height: 1.3;
+}
+
+.catalog-card__status {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.catalog-card__status--active {
+  background: rgba(34, 197, 94, 0.15);
+  color: #86efac;
+}
+
+.catalog-card__status--construction {
+  background: rgba(251, 191, 36, 0.15);
+  color: #fcd34d;
+}
+
+.catalog-card__status--planned {
+  background: rgba(148, 163, 184, 0.15);
+  color: var(--muted);
+}
+
+.catalog-card__desc {
+  color: var(--muted);
+  font-size: 0.95rem;
+  flex: 1;
+}
+
+.catalog-card__plans {
+  list-style: none;
+  font-size: 0.85rem;
+  color: var(--text);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
 @media (max-width: 380px) {
   .site-brand__sub { display: none; }
 }

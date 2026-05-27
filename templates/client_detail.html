@@ -12,13 +12,66 @@
     <h1>{{ client.nome }}</h1>
     <p class="subtitle">
       {% if parent %}Filial de <strong>{{ parent.nome }}</strong> · {% endif %}
-      Excellence Cloud ID: {{ client.clinica_id_erp or '—' }} · Dental Lab ID: {{ client.clinica_id_lab or client.clinica_id_erp or '—' }}
-      · Status: {{ client.status }}
+      Status: {{ client.status }}
     </p>
 
-    {% if saved == 'contracted' %}
+    {% if saved == 'profile' %}
+    <div class="alert alert-info">Dados do cliente atualizados com sucesso.</div>
+    {% elif saved == 'contracted' %}
     <div class="alert alert-info">Sistemas contratados atualizados com sucesso.</div>
     {% endif %}
+
+    <div class="card">
+      <h2>Dados do cliente</h2>
+      <form method="post" action="/clients/{{ client.id }}/update" id="client-edit-form">
+        <div class="grid-2">
+          <div><label>Nome fantasia *</label><input name="nome" value="{{ client.nome }}" required /></div>
+          <div><label>Razão social</label><input name="razao_social" value="{{ client.razao_social or '' }}" /></div>
+          <div>
+            <label>Tipo documento</label>
+            <select name="document_type" id="document_type">
+              <option value="cnpj"{% if client.document_type != 'cpf' %} selected{% endif %}>CNPJ</option>
+              <option value="cpf"{% if client.document_type == 'cpf' %} selected{% endif %}>CPF</option>
+            </select>
+          </div>
+          <div>
+            <label>CPF / CNPJ</label>
+            <input id="document_field" name="{% if client.document_type == 'cpf' %}cpf{% else %}cnpj{% endif %}" value="{{ client.cpf if client.document_type == 'cpf' else client.cnpj }}" data-mask="{% if client.document_type == 'cpf' %}cpf{% else %}cnpj{% endif %}" />
+          </div>
+          <div><label>E-mail 01</label><input name="email" type="email" value="{{ client.email or '' }}" /></div>
+          <div><label>E-mail 02</label><input name="email_02" type="email" value="{{ client.email_02 or '' }}" /></div>
+          <div><label>Telefone 01</label><input name="telefone" type="tel" value="{{ client.telefone or '' }}" placeholder="(00) 00000-0000" data-mask="phone" maxlength="16" /></div>
+          <div><label>Telefone 02</label><input name="telefone_02" type="tel" value="{{ client.telefone_02 or '' }}" placeholder="(00) 00000-0000" data-mask="phone" maxlength="16" /></div>
+          <div><label>Telefone 03</label><input name="telefone_03" type="tel" value="{{ client.telefone_03 or '' }}" placeholder="(00) 00000-0000" data-mask="phone" maxlength="16" /></div>
+          <div>
+            <label>Matriz (filial de)</label>
+            <select name="parent_client_id">
+              <option value="">— Matriz —</option>
+              {% for p in parent_options %}
+              <option value="{{ p.id }}"{% if client.parent_client_id == p.id %} selected{% endif %}>{{ p.nome }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div><label>ID vínculo Excellence Cloud</label><input name="clinica_id_erp" value="{{ client.clinica_id_erp or '' }}" placeholder="Ex: ID clínica no ERP" /></div>
+          <div><label>ID vínculo Dental Lab</label><input name="clinica_id_lab" value="{{ client.clinica_id_lab or '' }}" placeholder="Opcional" /></div>
+        </div>
+
+        <h3 class="section-title">Endereço</h3>
+        <div class="grid-2">
+          <div><label>CEP</label><input name="cep" id="cep" value="{{ address.cep if address else '' }}" data-mask="cep" /></div>
+          <div><label>UF</label><input name="uf" id="uf" maxlength="2" value="{{ address.uf if address else '' }}" /></div>
+          <div class="span-2"><label>Logradouro</label><input name="logradouro" id="logradouro" value="{{ address.logradouro if address else '' }}" /></div>
+          <div><label>Número</label><input name="numero" value="{{ address.numero if address else '' }}" /></div>
+          <div><label>Complemento</label><input name="complemento" value="{{ address.complemento if address else '' }}" /></div>
+          <div><label>Bairro</label><input name="bairro" id="bairro" value="{{ address.bairro if address else '' }}" /></div>
+          <div><label>Cidade</label><input name="cidade" id="cidade" value="{{ address.cidade if address else '' }}" /></div>
+          <div class="span-2"><label>Observações</label><textarea name="notes">{{ client.notes or '' }}</textarea></div>
+        </div>
+        <div class="actions">
+          <button class="btn btn-primary" type="submit">Salvar dados do cliente</button>
+        </div>
+      </form>
+    </div>
 
     <div class="card">
       <h2>Sistemas contratados</h2>
@@ -166,5 +219,6 @@
     </main>
   </div>
   <script src="/static/admin.js"></script>
+  <script src="/static/masks.js?v=2"></script>
 </body>
 </html>

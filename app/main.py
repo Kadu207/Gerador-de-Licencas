@@ -44,6 +44,7 @@ from app.services import (
     renew_license,
     revoke_license,
     summarize_client_licenses,
+    update_client,
     update_client_contracted_systems,
 )
 from app.sync import ensure_remote_tables, test_connections
@@ -191,10 +192,21 @@ def shutdown() -> None:
 # --- Página pública ---
 
 @app.get("/", response_class=HTMLResponse)
-def public_landing(request: Request, user=Depends(optional_user)):
+def public_landing(request: Request, db: Session = Depends(get_db), user=Depends(optional_user)):
+    catalog = (
+        db.query(SoftwareProduct)
+        .order_by(SoftwareProduct.sort_order.asc(), SoftwareProduct.name.asc())
+        .all()
+    )
     return templates.TemplateResponse(
         "public/index.html",
-        {"request": request, "user": user, "public_url": settings.public_base_url},
+        {
+            "request": request,
+            "user": user,
+            "public_url": settings.public_base_url,
+            "catalog": catalog,
+            "status_labels": CATALOG_STATUS_LABELS,
+        },
     )
 
 
@@ -388,6 +400,14 @@ def client_detail(
     if client.parent_client_id:
         parent = db.query(Client).filter(Client.id == client.parent_client_id).first()
 
+    parent_options = (
+        db.query(Client)
+        .filter(Client.parent_client_id.is_(None), Client.id != client_id)
+        .order_by(Client.nome)
+        .all()
+    )
+    addr = client.address
+
     labels = product_labels_dict(db)
     contracted = parse_contracted_products(client.contracted_products)
 
@@ -398,6 +418,8 @@ def client_detail(
             "user": user,
             "client": client,
             "parent": parent,
+            "parent_options": parent_options,
+            "address": addr,
             "licenses": enriched,
             "contracted_systems": contracted,
             "contracted_labels": [labels.get(s, s) for s in contracted],
@@ -433,6 +455,77 @@ def client_update_contracted_systems(
     except ValueError as exc:
         raise HTTPException(404, str(exc)) from exc
     return RedirectResponse(f"/clients/{client_id}?saved=contracted", status_code=303)
+
+
+@app.post("/clients/{client_id}/update")
+def client_update(
+    client_id: int,
+    nome: str = Form(...),
+    razao_social: str = Form(""),
+    document_type: str = Form("cnpj"),
+    cnpj: str = Form(""),
+    cpf: str = Form(""),
+    email: str = Form(""),
+    email_02: str = Form(""),
+    telefone: str = Form(""),
+    telefone_02: str = Form(""),
+    telefone_03: str = Form(""),
+    clinica_id_erp: str = Form(""),
+    clinica_id_lab: str = Form(""),
+    parent_client_id: str = Form(""),
+    logradouro: str = Form(""),
+    numero: str = Form(""),
+    complemento: str = Form(""),
+    bairro: str = Form(""),
+    cidade: str = Form(""),
+    uf: str = Form(""),
+    cep: str = Form(""),
+    notes: str = Form(""),
+    db: Session = Depends(get_db),
+    user: Operator = Depends(get_current_user),
+):
+    doc_value = cpf if document_type == "cpf" else cnpj
+    if doc_value and not validate_document(document_type, doc_value):
+        raise HTTPException(422, "Documento inválido")
+
+    cid_erp = int(clinica_id_erp) if clinica_id_erp.strip().isdigit() else None
+    cid_lab = int(clinica_id_lab) if clinica_id_lab.strip().isdigit() else None
+    parent_id = int(parent_client_id) if parent_client_id.strip().isdigit() else None
+    if parent_id == client_id:
+        parent_id = None
+
+    try:
+        update_client(
+            db,
+            operator=user.username,
+            client_id=client_id,
+            nome=nome,
+            razao_social=razao_social,
+            document_type=document_type,
+            cnpj=cnpj,
+            cpf=cpf,
+            email=email,
+            email_02=email_02,
+            telefone=telefone,
+            telefone_02=telefone_02,
+            telefone_03=telefone_03,
+            clinica_id_erp=cid_erp,
+            clinica_id_lab=cid_lab,
+            parent_client_id=parent_id,
+            notes=notes,
+            address={
+                "logradouro": logradouro,
+                "numero": numero,
+                "complemento": complemento,
+                "bairro": bairro,
+                "cidade": cidade,
+                "uf": uf,
+                "cep": cep,
+            },
+        )
+    except ValueError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    return RedirectResponse(f"/clients/{client_id}?saved=profile", status_code=303)
 
 
 @app.post("/clients/{client_id}/licenses")

@@ -237,6 +237,65 @@ def create_client(
     return client
 
 
+def update_client(
+    db: Session,
+    *,
+    operator: str,
+    client_id: int,
+    nome: str,
+    razao_social: str = "",
+    document_type: str = "cnpj",
+    cnpj: str = "",
+    cpf: str = "",
+    email: str = "",
+    email_02: str = "",
+    telefone: str = "",
+    telefone_02: str = "",
+    telefone_03: str = "",
+    clinica_id_erp: int | None = None,
+    clinica_id_lab: int | None = None,
+    parent_client_id: int | None = None,
+    notes: str = "",
+    address: dict | None = None,
+) -> Client:
+    client = db.query(Client).filter(Client.id == client_id).first()
+    if not client:
+        raise ValueError("Cliente não encontrado")
+
+    client.nome = nome.strip()
+    client.razao_social = razao_social.strip()
+    client.document_type = document_type.strip() or "cnpj"
+    client.cnpj = cnpj.strip()
+    client.cpf = cpf.strip()
+    client.email = email.strip()
+    client.email_02 = email_02.strip()
+    client.telefone = telefone.strip()
+    client.telefone_02 = telefone_02.strip()
+    client.telefone_03 = telefone_03.strip()
+    client.clinica_id_erp = clinica_id_erp
+    client.clinica_id_lab = clinica_id_lab or clinica_id_erp
+    client.parent_client_id = parent_client_id
+    client.notes = notes.strip()
+
+    if address is not None:
+        addr = client.address
+        if not addr:
+            addr = ClientAddress(client_id=client.id)
+            db.add(addr)
+        addr.logradouro = address.get("logradouro", "")
+        addr.numero = address.get("numero", "")
+        addr.complemento = address.get("complemento", "")
+        addr.bairro = address.get("bairro", "")
+        addr.cidade = address.get("cidade", "")
+        addr.uf = address.get("uf", "")
+        addr.cep = address.get("cep", "")
+
+    db.commit()
+    db.refresh(client)
+    log_action(db, operator, "client_update", f"Cliente {client.id} — {client.nome}")
+    return client
+
+
 def update_client_contracted_systems(
     db: Session,
     *,

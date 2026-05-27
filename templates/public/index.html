@@ -33,6 +33,44 @@
     </div>
   </section>
 
+  {% if catalog %}
+  <section class="catalog" id="sistemas" aria-labelledby="catalog-title">
+    <div class="site-container">
+      <header class="catalog__header">
+        <h2 id="catalog-title">Sistemas Inova TI</h2>
+        <p>Soluções desenvolvidas e licenciadas centralmente — cada produto com chave independente.</p>
+      </header>
+      <div class="catalog__grid">
+        {% for product in catalog %}
+        <article class="catalog-card">
+          <div class="catalog-card__head">
+            <h3>{{ product.name }}</h3>
+            <span class="catalog-card__status catalog-card__status--{{ product.status }}">
+              {{ status_labels.get(product.status, product.status) }}
+            </span>
+          </div>
+          <p class="catalog-card__desc">{{ product.description }}</p>
+          {% if product.plans %}
+          <ul class="catalog-card__plans">
+            {% for plan in product.plans if plan.active %}
+            <li>
+              <strong>{{ plan.name }}</strong>
+              {% if plan.price and plan.price > 0 %}
+              — R$ {{ '%.2f'|format(plan.price) }}
+              {% elif plan.description %}
+              — {{ plan.description }}
+              {% endif %}
+            </li>
+            {% endfor %}
+          </ul>
+          {% endif %}
+        </article>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
   <section class="features" aria-labelledby="features-title">
     <div class="features__grid">
       <article class="feature-card">
