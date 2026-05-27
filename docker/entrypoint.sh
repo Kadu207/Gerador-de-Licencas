@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-# Monta URL do Postgres com senha URL-encoded (evita travar quando .env aponta 127.0.0.1)
+# Monta URL do Postgres (usada pelo app, Alembic e docker compose exec)
 if [ -n "${POSTGRES_APP_PASSWORD:-}" ]; then
   export LOCAL_DATABASE_URL="$(python -c "
 import os
@@ -15,15 +15,15 @@ print(f'postgresql+psycopg://{user}:{quote_plus(pwd)}@{host}:{port}/{db}')
 ")"
 fi
 
-if echo "$LOCAL_DATABASE_URL" | grep -q postgresql; then
-  echo "[entrypoint] Aguardando Postgres ($POSTGRES_HOST)..."
+if echo "${LOCAL_DATABASE_URL:-}" | grep -q postgresql; then
+  echo "[entrypoint] Aguardando Postgres (${POSTGRES_HOST:-license-db})..."
   n=0
   until python -c "
 import os, sys
 from sqlalchemy import create_engine, text
-url = os.environ.get('LOCAL_DATABASE_URL', '')
+from app.database_url import resolve_database_url
 try:
-    e = create_engine(url)
+    e = create_engine(resolve_database_url())
     with e.connect() as c:
         c.execute(text('SELECT 1'))
     sys.exit(0)
@@ -39,9 +39,9 @@ except Exception as ex:
     sleep 2
   done
   echo "[entrypoint] Postgres disponível."
-  alembic upgrade head 2>/dev/null || python -c "from app.models import init_db; init_db()"
+  python docker/ensure_migrations.py
 else
-  python -c "from app.models import init_db; init_db()"
+  python docker/ensure_migrations.py
 fi
 
 PROXY_ARGS=""

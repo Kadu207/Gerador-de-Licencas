@@ -1,4 +1,7 @@
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+from app.database_url import resolve_database_url
 
 
 class Settings(BaseSettings):
@@ -46,6 +49,15 @@ class Settings(BaseSettings):
 
     # Receita Federal / BrasilAPI
     receita_api_base: str = "https://brasilapi.com.br/api"
+
+    @model_validator(mode="after")
+    def resolve_db_url(self) -> "Settings":
+        object.__setattr__(
+            self,
+            "local_database_url",
+            resolve_database_url(self.local_database_url),
+        )
+        return self
 
 
 settings = Settings()

@@ -19,6 +19,7 @@ COPY static ./static
 COPY alembic ./alembic
 COPY alembic.ini .
 COPY docker/entrypoint.sh /entrypoint.sh
+COPY docker/ensure_migrations.py docker/ensure_migrations.py
 RUN sed -i 's/\r$//' /entrypoint.sh && chmod +x /entrypoint.sh && mkdir -p /app/data
 
 EXPOSE 8195
