@@ -1,6 +1,8 @@
-/** Máscaras de input — CPF, CNPJ, telefone, CEP */
+/** Máscaras CPF/CNPJ/telefone/CEP + consulta RF automática */
 (function () {
-  function digitsOnly(v) { return (v || "").replace(/\D/g, ""); }
+  function digitsOnly(v) {
+    return (v || "").replace(/\D/g, "");
+  }
 
   function maskCpf(value) {
     const d = digitsOnly(value).slice(0, 11);
@@ -22,9 +24,9 @@
   function maskPhone(value) {
     const d = digitsOnly(value).slice(0, 11);
     if (d.length <= 10) {
-      return d.replace(/(\d{2})(\d{4})(\d{0,4})/, "($1) $2-$3").trim();
+      return d.replace(/(\d{2})(\d{4})(\d{0,4})/, "($1) $2-$3").replace(/[- ]$/, "").trim();
     }
-    return d.replace(/(\d{2})(\d{5})(\d{0,4})/, "($1) $2-$3").trim();
+    return d.replace(/(\d{2})(\d{5})(\d{0,4})/, "($1) $2-$3").replace(/[- ]$/, "").trim();
   }
 
   function maskCep(value) {
@@ -32,18 +34,83 @@
     return d.replace(/(\d{5})(\d)/, "$1-$2");
   }
 
-  function applyMask(el, fn) {
+  const MASKS = { cpf: maskCpf, cnpj: maskCnpj, phone: maskPhone, cep: maskCep };
+
+  function caretAfterDigits(formatted, digitCount) {
+    if (digitCount <= 0) return 0;
+    let seen = 0;
+    for (let i = 0; i < formatted.length; i++) {
+      if (/\d/.test(formatted[i])) {
+        seen++;
+        if (seen >= digitCount) return i + 1;
+      }
+    }
+    return formatted.length;
+  }
+
+  function bindMask(el, fn) {
+    if (!el || el.dataset.maskBound === "1") return;
+    el.dataset.maskBound = "1";
     el.addEventListener("input", function () {
-      const pos = el.selectionStart;
-      el.value = fn(el.value);
-      el.setSelectionRange(pos, pos);
+      const raw = el.value;
+      const start = el.selectionStart ?? raw.length;
+      const digitsBefore = digitsOnly(raw.slice(0, start)).length;
+      const masked = fn(raw);
+      el.value = masked;
+      const next = caretAfterDigits(masked, digitsBefore);
+      try {
+        el.setSelectionRange(next, next);
+      } catch (_) {}
     });
   }
 
-  document.querySelectorAll("[data-mask=cpf]").forEach(function (el) { applyMask(el, maskCpf); });
-  document.querySelectorAll("[data-mask=cnpj]").forEach(function (el) { applyMask(el, maskCnpj); });
-  document.querySelectorAll("[data-mask=phone]").forEach(function (el) { applyMask(el, maskPhone); });
-  document.querySelectorAll("[data-mask=cep]").forEach(function (el) { applyMask(el, maskCep); });
+  function bindAllMasks(root) {
+    (root || document).querySelectorAll("[data-mask]").forEach(function (el) {
+      const kind = el.getAttribute("data-mask");
+      if (MASKS[kind]) bindMask(el, MASKS[kind]);
+    });
+  }
+
+  function setField(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.value = val || "";
+  }
+
+  function showDocHint(msg, isError) {
+    const hint = document.getElementById("doc_hint");
+    if (!hint) return;
+    hint.textContent = msg || "";
+    hint.className = isError ? "field-hint error" : "field-hint";
+  }
+
+  async function lookupCnpj(cnpj) {
+    const res = await fetch("/api/cnpj/" + cnpj);
+    if (!res.ok) {
+      const err = await res.json().catch(function () { return {}; });
+      throw new Error(err.detail || "CNPJ não encontrado na Receita Federal");
+    }
+    return res.json();
+  }
+
+  async function autoLookupCnpjIfReady() {
+    const docType = document.getElementById("document_type");
+    const docField = document.getElementById("document_field");
+    if (!docField || !docType || docType.value !== "cnpj") return;
+    const cnpj = digitsOnly(docField.value);
+    if (cnpj.length !== 14) return;
+    showDocHint("Consultando Receita Federal…", false);
+    try {
+      const data = await lookupCnpj(cnpj);
+      setField("razao_social", data.razao_social);
+      const nome = document.querySelector("[name=nome]");
+      if (nome && !nome.value.trim()) {
+        nome.value = data.nome_fantasia || data.razao_social || "";
+      }
+      showDocHint("Dados da Receita Federal preenchidos automaticamente.", false);
+    } catch (e) {
+      showDocHint(e.message || "Falha na consulta RF", true);
+    }
+  }
 
   const docType = document.getElementById("document_type");
   const docField = document.getElementById("document_field");
@@ -53,11 +120,24 @@
       docField.name = isCpf ? "cpf" : "cnpj";
       docField.placeholder = isCpf ? "000.000.000-00" : "00.000.000/0000-00";
       docField.setAttribute("data-mask", isCpf ? "cpf" : "cnpj");
+      docField.dataset.maskBound = "0";
       docField.value = "";
+      showDocHint("", false);
+      bindMask(docField, isCpf ? maskCpf : maskCnpj);
     }
     docType.addEventListener("change", updateDocMask);
     updateDocMask();
+
+    docField.addEventListener("blur", autoLookupCnpjIfReady);
+    docField.addEventListener("input", function () {
+      const isCnpj = docType.value === "cnpj";
+      if (isCnpj && digitsOnly(docField.value).length === 14) {
+        autoLookupCnpjIfReady();
+      }
+    });
   }
+
+  bindAllMasks(document);
 
   const cepInput = document.getElementById("cep");
   if (cepInput) {
@@ -68,35 +148,10 @@
         const res = await fetch("/api/cep/" + cep);
         if (!res.ok) return;
         const data = await res.json();
-        const set = function (id, val) {
-          const el = document.getElementById(id);
-          if (el) el.value = val || "";
-        };
-        set("logradouro", data.logradouro);
-        set("bairro", data.bairro);
-        set("cidade", data.cidade);
-        set("uf", data.uf);
-      } catch (_) {}
-    });
-  }
-
-  const cnpjLookup = document.getElementById("cnpj_lookup");
-  if (cnpjLookup) {
-    cnpjLookup.addEventListener("click", async function () {
-      const field = document.querySelector("[name=cnpj]");
-      if (!field) return;
-      const cnpj = digitsOnly(field.value);
-      if (cnpj.length !== 14) return;
-      try {
-        const res = await fetch("/api/cnpj/" + cnpj);
-        if (!res.ok) return;
-        const data = await res.json();
-        const set = function (name, val) {
-          const el = document.querySelector("[name=" + name + "]");
-          if (el) el.value = val || "";
-        };
-        set("razao_social", data.razao_social);
-        set("nome", data.nome_fantasia || data.razao_social);
+        setField("logradouro", data.logradouro);
+        setField("bairro", data.bairro);
+        setField("cidade", data.cidade);
+        setField("uf", data.uf);
       } catch (_) {}
     });
   }

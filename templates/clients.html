@@ -3,29 +3,31 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Clientes — Gerenciador de Licenças</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+  <title>Clientes — Inova TI Licenças</title>
   <link rel="stylesheet" href="/static/styles.css" />
 </head>
 <body>
   <header class="topbar">
-    <div class="brand">Gerenciador de Licenças · InovatiTech</div>
+    <div class="brand"><img src="/static/favicon.svg" alt="" class="brand-icon" /> Inova TI · Licenças</div>
     <nav>
       <a href="/dashboard">Dashboard</a>
       <a href="/clients">Clientes</a>
+      <a href="/admin/users">Administração</a>
       <a href="/logout">Sair</a>
     </nav>
   </header>
 
   <main class="container">
     <h1>Clientes</h1>
-    <p class="subtitle">Cadastro completo — cada software (Cloud, Lab, VDE) exige licença independente.</p>
+    <p class="subtitle">Preencha todos os dados abaixo:</p>
 
     <div class="card">
       <h2>Novo cliente</h2>
       <form method="post" action="/clients">
         <div class="grid-2">
           <div><label>Nome fantasia *</label><input name="nome" required /></div>
-          <div><label>Razão social</label><input name="razao_social" /></div>
+          <div><label>Razão social</label><input name="razao_social" id="razao_social" /></div>
           <div>
             <label>Tipo documento</label>
             <select name="document_type" id="document_type">
@@ -35,10 +37,8 @@
           </div>
           <div>
             <label>CPF / CNPJ</label>
-            <div style="display:flex;gap:8px">
-              <input id="document_field" name="cnpj" data-mask="cnpj" style="flex:1" />
-              <button type="button" id="cnpj_lookup" class="btn btn-secondary">Consultar RF</button>
-            </div>
+            <input id="document_field" name="cnpj" data-mask="cnpj" />
+            <p id="doc_hint" class="field-hint">CNPJ: dados da Receita Federal são preenchidos automaticamente.</p>
           </div>
           <div><label>E-mail 01</label><input name="email" type="email" /></div>
           <div><label>E-mail 02</label><input name="email_02" type="email" /></div>
@@ -54,20 +54,20 @@
               {% endfor %}
             </select>
           </div>
-          <div><label>Clínica ID (ERP)</label><input name="clinica_id_erp" placeholder="Ex: 1" /></div>
-          <div><label>Clínica ID (Lab)</label><input name="clinica_id_lab" placeholder="Opcional" /></div>
+          <div><label>ID vínculo produto 01</label><input name="clinica_id_erp" placeholder="Ex: 1" /></div>
+          <div><label>ID vínculo produto 02</label><input name="clinica_id_lab" placeholder="Opcional" /></div>
         </div>
 
-        <h3 style="margin:1.5rem 0 0.75rem">Endereço</h3>
+        <h3 class="section-title">Endereço</h3>
         <div class="grid-2">
           <div><label>CEP</label><input name="cep" id="cep" data-mask="cep" /></div>
           <div><label>UF</label><input name="uf" id="uf" maxlength="2" /></div>
-          <div style="grid-column:1/-1"><label>Logradouro</label><input name="logradouro" id="logradouro" /></div>
+          <div class="span-2"><label>Logradouro</label><input name="logradouro" id="logradouro" /></div>
           <div><label>Número</label><input name="numero" /></div>
           <div><label>Complemento</label><input name="complemento" /></div>
           <div><label>Bairro</label><input name="bairro" id="bairro" /></div>
           <div><label>Cidade</label><input name="cidade" id="cidade" /></div>
-          <div style="grid-column:1/-1"><label>Observações</label><textarea name="notes"></textarea></div>
+          <div class="span-2"><label>Observações</label><textarea name="notes"></textarea></div>
         </div>
         <div class="actions"><button class="btn btn-primary" type="submit">Cadastrar cliente</button></div>
       </form>
@@ -75,28 +75,37 @@
 
     <div class="card">
       <h2>Clientes cadastrados</h2>
-      <table>
-        <thead>
-          <tr><th>Nome</th><th>Documento</th><th>Clínica ERP</th><th>Status</th><th></th></tr>
-        </thead>
-        <tbody>
-          {% for c in clients %}
-          <tr>
-            <td>
-              <strong>{{ c.nome }}</strong>
-              {% if c.parent_client_id %}<br><span class="badge">Filial</span>{% endif %}
-              <br><span style="font-size:12px;color:#605e5c">{{ c.email }}</span>
-            </td>
-            <td>{{ c.cnpj or c.cpf or '—' }}</td>
-            <td>{{ c.clinica_id_erp or '—' }}</td>
-            <td>{{ c.status }}</td>
-            <td><a href="/clients/{{ c.id }}">Abrir</a></td>
-          </tr>
-          {% else %}
-          <tr><td colspan="5">Nenhum cliente cadastrado.</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Cliente</th>
+              <th>Produto(s)</th>
+              <th>Status da licença</th>
+              <th>Pagamento em dia</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in client_rows %}
+            {% set c = row.client %}
+            <tr>
+              <td>
+                <strong>{{ c.nome }}</strong>
+                {% if c.parent_client_id %}<span class="badge">Filial</span>{% endif %}
+                <br><span class="muted-sm">{{ c.cnpj or c.cpf or '—' }}</span>
+              </td>
+              <td>{{ row.summary.products }}</td>
+              <td>{{ row.summary.license_status }}</td>
+              <td>{{ row.summary.payment_ok }}</td>
+              <td><a class="btn btn-secondary btn-sm" href="/clients/{{ c.id }}">Gerenciar</a></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5">Nenhum cliente cadastrado.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
   </main>
   <script src="/static/masks.js"></script>

@@ -30,6 +30,7 @@ from app.services import (
     refresh_all_licenses,
     renew_license,
     revoke_license,
+    summarize_client_licenses,
 )
 from app.sync import ensure_remote_tables, test_connections
 
@@ -38,7 +39,7 @@ templates = Jinja2Templates(directory=str(ROOT / "templates"))
 templates.env.filters["tojson"] = json.dumps
 
 app = FastAPI(
-    title="Gerenciador de Licenças — InovatiTech",
+    title="Inova TI — Gerenciador de Licenças",
     version="2.0.0",
     description="API central de licenciamento para Excellence Cloud, Dental Lab e VDE Incorporadora.",
 )
@@ -253,12 +254,16 @@ def dashboard(request: Request, db: Session = Depends(get_db), user: Operator = 
 def clients_page(request: Request, db: Session = Depends(get_db), user: Operator = Depends(get_current_user)):
     clients = db.query(Client).order_by(Client.nome.asc()).all()
     parent_options = db.query(Client).filter(Client.parent_client_id.is_(None)).order_by(Client.nome).all()
+    client_rows = []
+    for c in clients:
+        licenses = db.query(LicenseRecord).filter(LicenseRecord.client_id == c.id).all()
+        client_rows.append({"client": c, "summary": summarize_client_licenses(licenses)})
     return templates.TemplateResponse(
         "clients.html",
         {
             "request": request,
             "user": user,
-            "clients": clients,
+            "client_rows": client_rows,
             "parent_options": parent_options,
             "products": PRODUCT_LABELS,
             "periods": PERIOD_LABELS,
@@ -488,6 +493,83 @@ def sync_all(db: Session = Depends(get_db), user: Operator = Depends(get_current
     n = refresh_all_licenses(db)
     log_action(db, user.username, "sync_all", f"{n} licenças sincronizadas")
     return RedirectResponse("/dashboard", status_code=303)
+
+
+@app.get("/admin/users", response_class=HTMLResponse)
+def admin_users_page(request: Request, db: Session = Depends(get_db), user: Operator = Depends(get_current_user)):
+    operators = db.query(Operator).order_by(Operator.username.asc()).all()
+    return templates.TemplateResponse(
+        "admin_users.html",
+        {"request": request, "user": user, "operators": operators, "error": None},
+    )
+
+
+@app.post("/admin/users")
+def admin_users_create(
+    request: Request,
+    username: str = Form(...),
+    password: str = Form(...),
+    nome: str = Form(""),
+    db: Session = Depends(get_db),
+    user: Operator = Depends(get_current_user),
+):
+    uname = username.strip().lower()
+    if db.query(Operator).filter(Operator.username == uname).first():
+        operators = db.query(Operator).order_by(Operator.username.asc()).all()
+        return templates.TemplateResponse(
+            "admin_users.html",
+            {
+                "request": request,
+                "user": user,
+                "operators": operators,
+                "error": f"Usuário «{uname}» já existe.",
+            },
+            status_code=422,
+        )
+    db.add(
+        Operator(
+            username=uname,
+            password_hash=hash_password(password),
+            nome=nome.strip() or uname,
+            ativo=True,
+        )
+    )
+    db.commit()
+    log_action(db, user.username, "operator_create", f"Operador {uname}")
+    return RedirectResponse("/admin/users", status_code=303)
+
+
+@app.post("/admin/users/{operator_id}/password")
+def admin_users_password(
+    operator_id: int,
+    password: str = Form(...),
+    db: Session = Depends(get_db),
+    user: Operator = Depends(get_current_user),
+):
+    op = db.query(Operator).filter(Operator.id == operator_id).first()
+    if not op:
+        raise HTTPException(404)
+    op.password_hash = hash_password(password)
+    db.commit()
+    log_action(db, user.username, "operator_password", f"Senha alterada: {op.username}")
+    return RedirectResponse("/admin/users", status_code=303)
+
+
+@app.post("/admin/users/{operator_id}/toggle")
+def admin_users_toggle(
+    operator_id: int,
+    db: Session = Depends(get_db),
+    user: Operator = Depends(get_current_user),
+):
+    op = db.query(Operator).filter(Operator.id == operator_id).first()
+    if not op:
+        raise HTTPException(404)
+    if op.username == user.username:
+        raise HTTPException(422, "Não é possível desativar o próprio usuário.")
+    op.ativo = not op.ativo
+    db.commit()
+    log_action(db, user.username, "operator_toggle", f"{op.username} ativo={op.ativo}")
+    return RedirectResponse("/admin/users", status_code=303)
 
 
 # --- APIs auxiliares (admin) ---

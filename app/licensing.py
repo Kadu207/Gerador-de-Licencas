@@ -34,9 +34,9 @@ PERIOD_DAYS: dict[str, int] = {
 }
 
 PRODUCT_LABELS = {
-    PRODUCT_CLOUD: "Excellence Dental Cloud",
-    PRODUCT_LAB: "Dental Lab",
-    PRODUCT_VDE: "VDE Incorporadora",
+    PRODUCT_CLOUD: "Produto 01",
+    PRODUCT_LAB: "Produto 02",
+    PRODUCT_VDE: "Produto 03",
 }
 
 PERIOD_LABELS = {

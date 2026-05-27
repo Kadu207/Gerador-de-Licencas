@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+  <title>Usuários — Inova TI Licenças</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><img src="/static/favicon.svg" alt="" class="brand-icon" /> Inova TI · Licenças</div>
+    <nav>
+      <a href="/dashboard">Dashboard</a>
+      <a href="/clients">Clientes</a>
+      <a href="/admin/users">Administração</a>
+      <a href="/logout">Sair</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <h1>Administração de usuários</h1>
+    <p class="subtitle">Cadastre operadores, altere senhas e ative ou desative acessos ao painel.</p>
+
+    {% if error %}
+    <div class="alert-error">{{ error }}</div>
+    {% endif %}
+
+    <div class="card">
+      <h2>Novo usuário</h2>
+      <form method="post" action="/admin/users" class="grid-3">
+        <div><label>Usuário *</label><input name="username" required autocomplete="off" /></div>
+        <div><label>Senha *</label><input name="password" type="password" required autocomplete="new-password" /></div>
+        <div><label>Nome exibido</label><input name="nome" /></div>
+        <div class="actions" style="grid-column:1/-1"><button class="btn btn-primary" type="submit">Cadastrar usuário</button></div>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Usuários cadastrados</h2>
+      <table>
+        <thead>
+          <tr><th>Usuário</th><th>Nome</th><th>Status</th><th>Alterar senha</th><th></th></tr>
+        </thead>
+        <tbody>
+          {% for op in operators %}
+          <tr>
+            <td><strong>{{ op.username }}</strong></td>
+            <td>{{ op.nome or '—' }}</td>
+            <td>{% if op.ativo %}<span class="badge ok">Ativo</span>{% else %}<span class="badge warn">Inativo</span>{% endif %}</td>
+            <td>
+              <form method="post" action="/admin/users/{{ op.id }}/password" class="inline-form">
+                <input name="password" type="password" placeholder="Nova senha" required minlength="6" />
+                <button class="btn btn-secondary btn-sm" type="submit">Salvar</button>
+              </form>
+            </td>
+            <td>
+              {% if op.username != user.username %}
+              <form method="post" action="/admin/users/{{ op.id }}/toggle">
+                <button class="btn btn-secondary btn-sm" type="submit">{% if op.ativo %}Desativar{% else %}Ativar{% endif %}</button>
+              </form>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </main>
+</body>
+</html>

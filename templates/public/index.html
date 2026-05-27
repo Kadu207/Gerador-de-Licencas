@@ -3,13 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>InovatiTech — Gerenciador de Licenças</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+  <title>Inova TI — Gerenciador de Licenças</title>
   <link rel="stylesheet" href="/static/public/landing.css" />
 </head>
 <body>
   <header class="hero">
     <nav class="nav">
-      <span class="logo">InovatiTech</span>
+      <span class="logo"><img src="/static/favicon.svg" alt="" class="logo-icon" /> Inova TI</span>
       <div class="nav-links">
         <a href="/suporte">Suporte</a>
         {% if user %}
@@ -22,8 +23,8 @@
     <div class="hero-content">
       <h1>Gerenciamento centralizado de licenças</h1>
       <p class="lead">
-        Excellence Dental Cloud, Dental Lab e VDE Incorporadora —
-        cada software com licença independente.
+        Emissão, vínculo e controle de licenças digitais para todos os produtos da Inova TI —
+        cada cliente com chaves independentes de 25 caracteres.
       </p>
       <div class="hero-actions">
         <a href="/app/login" class="btn btn-primary">Acessar painel</a>
@@ -39,16 +40,16 @@
     </div>
     <div class="feature">
       <h3>Alertas automáticos</h3>
-      <p>Notificações por e-mail em 20, 15, 7, 3, 2 e 1 dia antes do vencimento.</p>
+      <p>Notificações por e-mail antes do vencimento da licença.</p>
     </div>
     <div class="feature">
-      <h3>Pagamentos Stripe</h3>
+      <h3>Pagamentos integrados</h3>
       <p>Cartão, PIX e boleto com confirmação automática de renovação.</p>
     </div>
   </section>
 
   <footer class="footer">
-    <p>&copy; 2026 InovatiTech · {% if public_url %}{{ public_url }}{% else %}licencas.inovatitech.com.br{% endif %}</p>
+    <p>&copy; 2026 Inova TI · {% if public_url %}{{ public_url }}{% else %}licencas.inovatitech.com.br{% endif %}</p>
   </footer>
 </body>
 </html>

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Inova TI">
+  <defs>
+    <linearGradient id="g" x1="8" y1="8" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0078d4"/>
+      <stop offset="1" stop-color="#004578"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#g)"/>
+  <path fill="#fff" d="M14 42V22h8.5c5.2 0 8.5 2.8 8.5 7.5S27.7 37 22.5 37H20v5h-6zm6-10h2.2c2.1 0 3.3-1 3.3-2.5S22.3 27 20.2 27H20v5zm16-10h6l7 20h-6.5l-1.2-3.5h-7.5L33 37h-6.5l7-20zm3.5 12.5L37 28.8 35.5 34.5z"/>
+</svg>

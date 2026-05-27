@@ -24,7 +24,8 @@ body {
   margin: 0 auto;
 }
 
-.logo { font-weight: 700; font-size: 1.25rem; color: var(--text); text-decoration: none; }
+.logo { font-weight: 700; font-size: 1.25rem; color: var(--text); display: inline-flex; align-items: center; gap: 0.5rem; }
+.logo-icon { width: 28px; height: 28px; border-radius: 6px; }
 
 .nav-links { display: flex; gap: 1.5rem; align-items: center; }
 .nav-links a { color: var(--muted); text-decoration: none; }
@@ -38,10 +39,12 @@ body {
 }
 
 .hero {
-  min-height: 70vh;
+  min-height: 75vh;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(160deg, #0f1419 0%, #1a2332 50%, #0d2137 100%);
+  background:
+    linear-gradient(160deg, rgba(15, 20, 25, 0.88) 0%, rgba(13, 33, 55, 0.82) 100%),
+    url("/static/public/hero-bg.jpg") center center / cover no-repeat;
 }
 
 .hero-small { min-height: auto; padding-bottom: 2rem; }

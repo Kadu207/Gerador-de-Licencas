@@ -128,6 +128,36 @@ def effective_for_license(lic: LicenseRecord) -> dict:
     return eff
 
 
+def summarize_client_licenses(licenses: list[LicenseRecord]) -> dict[str, str]:
+    """Resumo para listagem de clientes."""
+    if not licenses:
+        return {"products": "—", "license_status": "Sem licença", "payment_ok": "—"}
+
+    from app.licensing import PRODUCT_LABELS
+
+    products: set[str] = set()
+    statuses: set[str] = set()
+    payment_ok = True
+
+    for lic in licenses:
+        products.add(PRODUCT_LABELS.get(lic.produto, lic.produto))
+        eff = effective_for_license(lic)
+        if lic.manual_status in ("revoked", "cancelled") or eff.get("licenseExpired"):
+            statuses.add("Expirada")
+        elif eff.get("valid"):
+            statuses.add("Em vigor")
+        else:
+            statuses.add("Inativa")
+        if eff.get("paymentPhase") in ("grace", "blocked", "cancel_eligible", "cancelled"):
+            payment_ok = False
+
+    return {
+        "products": ", ".join(sorted(products)),
+        "license_status": ", ".join(sorted(statuses)),
+        "payment_ok": "Sim" if payment_ok else "Não",
+    }
+
+
 def create_client(
     db: Session,
     *,
