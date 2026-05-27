@@ -183,8 +183,11 @@ def public_landing(request: Request, user=Depends(optional_user)):
 
 
 @app.get("/suporte", response_class=HTMLResponse)
-def public_support(request: Request):
-    return templates.TemplateResponse("public/suporte.html", {"request": request})
+def public_support(request: Request, user=Depends(optional_user)):
+    return templates.TemplateResponse(
+        "public/suporte.html",
+        {"request": request, "user": user, "public_url": settings.public_base_url},
+    )
 
 
 # --- Admin ---

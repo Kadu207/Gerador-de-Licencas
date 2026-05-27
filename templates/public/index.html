@@ -1,61 +1,43 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="icon" href="/static/inova-ti-logo.jpg" type="image/jpeg" />
+  {% include "public/_head.html" %}
   <title>Gerador de Licenças — Inova TI</title>
-  <link rel="stylesheet" href="/static/public/landing.css" />
 </head>
 <body>
-  <header class="site-header">
-    <a href="/" class="logo">
-      <img src="/static/inova-ti-logo.jpg" alt="Inova TI" width="36" height="36" />
-      <span>Inova TI · Licenças</span>
-    </a>
-    <nav class="header-actions">
-      <a href="/suporte">Suporte</a>
-      {% if user %}
-      <a href="/dashboard" class="btn-nav">Painel</a>
-      {% else %}
-      <a href="/app/login" class="btn-nav">Entrar</a>
-      {% endif %}
-    </nav>
-  </header>
+  {% include "public/_header.html" %}
 
-  <section class="hero">
-    <img class="hero-bg" src="/static/public/hero-bg.jpg" alt="" fetchpriority="high" />
-    <div class="hero-overlay" aria-hidden="true"></div>
-    <div class="hero-content">
-      <h1>Gerenciamento centralizado de licenças</h1>
-      <p class="lead">
+  <section class="hero" role="banner">
+    <div class="hero__inner">
+      <h1 class="hero__title">Gerenciamento centralizado de licenças</h1>
+      <p class="hero__lead">
         Emissão, vínculo e controle de licenças digitais para todos os produtos da Inova TI —
         cada cliente com chaves independentes de 25 caracteres.
       </p>
-      <div class="hero-actions">
-        <a href="/app/login" class="btn btn-primary">Acessar painel</a>
-        <a href="/suporte" class="btn btn-secondary">Central de suporte</a>
+      <div class="hero__actions">
+        <a href="/app/login" class="btn btn--primary">Acessar painel</a>
+        <a href="/suporte" class="btn btn--secondary">Central de suporte</a>
       </div>
     </div>
   </section>
 
-  <section class="features">
-    <div class="feature">
-      <h3>Chaves de 25 caracteres</h3>
-      <p>Emissão segura com validação remota via API HTTPS.</p>
-    </div>
-    <div class="feature">
-      <h3>Alertas automáticos</h3>
-      <p>Notificações por e-mail antes do vencimento da licença.</p>
-    </div>
-    <div class="feature">
-      <h3>Pagamentos integrados</h3>
-      <p>Cartão, PIX e boleto com confirmação automática de renovação.</p>
+  <section class="features" aria-labelledby="features-title">
+    <div class="features__grid">
+      <article class="feature-card">
+        <h3 id="features-title">Chaves de 25 caracteres</h3>
+        <p>Emissão segura com validação remota via API HTTPS.</p>
+      </article>
+      <article class="feature-card">
+        <h3>Alertas automáticos</h3>
+        <p>Notificações por e-mail antes do vencimento da licença.</p>
+      </article>
+      <article class="feature-card">
+        <h3>Pagamentos integrados</h3>
+        <p>Cartão, PIX e boleto com confirmação automática de renovação.</p>
+      </article>
     </div>
   </section>
 
-  <footer class="footer">
-    <p>&copy; 2026 Inova TI · {% if public_url %}{{ public_url }}{% else %}licencas.inovatitech.com.br{% endif %}</p>
-  </footer>
+  {% include "public/_footer.html" %}
 </body>
 </html>

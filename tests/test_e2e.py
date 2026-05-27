@@ -51,7 +51,7 @@ def test_health(client: TestClient):
 def test_public_landing(client: TestClient):
     r = client.get("/")
     assert r.status_code == 200
-    assert "Inova TI" in r.text
+    assert "Gerador de Licenças" in r.text
 
 
 def test_e2e_client_license_validate(client: TestClient):

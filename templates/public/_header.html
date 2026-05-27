@@ -1,0 +1,19 @@
+<header class="site-header">
+  <div class="site-header__inner">
+    <a href="/" class="site-brand">
+      <img src="/static/inova-ti-logo.jpg" alt="Inova TI" width="40" height="40" loading="eager" />
+      <span class="site-brand__text">Gerador de Licenças<span class="site-brand__sub">Inova TI</span></span>
+    </a>
+    <button type="button" class="site-nav-toggle" aria-label="Abrir menu" aria-expanded="false" data-nav-toggle>
+      <span></span><span></span><span></span>
+    </button>
+    <nav class="site-nav" data-nav>
+      <a href="/suporte">Suporte</a>
+      {% if user %}
+      <a href="/dashboard" class="site-nav__cta">Painel</a>
+      {% else %}
+      <a href="/app/login" class="site-nav__cta">Entrar</a>
+      {% endif %}
+    </nav>
+  </div>
+</header>

@@ -1,81 +1,68 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="icon" href="/static/inova-ti-logo.jpg" type="image/jpeg" />
+  {% include "public/_head.html" %}
   <title>Suporte — Gerador de Licenças Inova TI</title>
-  <link rel="stylesheet" href="/static/public/landing.css" />
 </head>
-<body>
-  <header class="site-header">
-    <a href="/" class="logo">
-      <img src="/static/inova-ti-logo.jpg" alt="Inova TI" width="36" height="36" />
-      <span>Inova TI · Licenças</span>
-    </a>
-    <nav class="header-actions">
-      <a href="/">Início</a>
-      <a href="/app/login" class="btn-nav">Entrar</a>
-    </nav>
-  </header>
+<body class="page">
+  {% include "public/_header.html" %}
 
-  <main class="page-main">
-    <div class="page-hero">
+  <main class="page__main">
+    <div class="page__intro">
       <h1>Central de suporte</h1>
       <p>Renovação de licenças, dúvidas comerciais e orientações técnicas.</p>
     </div>
 
-    <div class="support-grid">
-      <div class="support-card">
-        <h3>Renovar licença</h3>
-        <p>Após o pagamento confirmado, a validade é estendida automaticamente no painel administrativo.</p>
+    <div class="support-layout">
+      <div class="support-cards">
+        <article class="support-card">
+          <h3>Renovar licença</h3>
+          <p>Após o pagamento confirmado, a validade é estendida automaticamente no painel administrativo.</p>
+        </article>
+        <article class="support-card">
+          <h3>Ativar em um novo servidor</h3>
+          <p>Informe a chave de 25 caracteres no software do cliente. A ativação remota vincula a instalação.</p>
+        </article>
+        <article class="support-card">
+          <h3>Vencimento e bloqueio</h3>
+          <p>O bloqueio técnico ocorre no dia seguinte ao fim da validade. Pagamentos em atraso entram em carência.</p>
+        </article>
+        <article class="support-card">
+          <h3>Chave por produto</h3>
+          <p>Cada software possui licença independente. Um cliente pode ter várias chaves, uma por produto.</p>
+        </article>
       </div>
-      <div class="support-card">
-        <h3>Ativar em um novo servidor</h3>
-        <p>Informe a chave de 25 caracteres no software do cliente. A ativação remota vincula a instalação à clínica.</p>
-      </div>
-      <div class="support-card">
-        <h3>Vencimento e bloqueio</h3>
-        <p>O bloqueio técnico ocorre no dia seguinte ao fim da validade. Pagamentos em atraso entram em carência comercial.</p>
-      </div>
-      <div class="support-card">
-        <h3>Chave por produto</h3>
-        <p>Cada software possui licença independente. Um cliente pode ter várias chaves, uma por produto contratado.</p>
+
+      <div class="support-faq">
+        <h2>Perguntas frequentes</h2>
+        <details class="faq-item">
+          <summary>Como renovar minha licença?</summary>
+          <p>Entre em contato com o comercial Inova TI ou utilize o link de pagamento enviado por e-mail.</p>
+        </details>
+        <details class="faq-item">
+          <summary>O que acontece quando a licença vence?</summary>
+          <p>O software deixa de funcionar no dia seguinte ao vencimento da validade técnica.</p>
+        </details>
+        <details class="faq-item">
+          <summary>Posso usar a mesma chave em dois produtos?</summary>
+          <p>Não. Cada chave é exclusiva para um produto. Solicite emissão separada no painel.</p>
+        </details>
+        <details class="faq-item">
+          <summary>Perdi minha chave — o que fazer?</summary>
+          <p>O administrador Inova TI consulta a chave em Clientes → Gerenciar → Licenças do cliente.</p>
+        </details>
+        <a class="page__back" href="/">← Voltar ao início</a>
       </div>
     </div>
 
-    <div class="contact-box">
+    <div class="contact-banner">
       <p>Precisa de ajuda comercial ou técnica?</p>
       <p style="margin-top:0.5rem">
-        <a href="https://inovatitech.com.br" target="_blank" rel="noopener">inovatitech.com.br</a>
-        · contato pelo site oficial da Inova TI
+        <a href="https://inovatitech.com.br" target="_blank" rel="noopener noreferrer">inovatitech.com.br</a>
       </p>
     </div>
-
-    <section class="container-narrow faq">
-      <h2 style="margin-bottom:1rem">Perguntas frequentes</h2>
-      <details>
-        <summary>Como renovar minha licença?</summary>
-        <p>Entre em contato com o comercial Inova TI ou utilize o link de pagamento enviado por e-mail quando disponível.</p>
-      </details>
-      <details>
-        <summary>O que acontece quando a licença vence?</summary>
-        <p>O software deixa de funcionar no dia seguinte ao vencimento da validade técnica. Pagamentos em atraso seguem regra comercial de carência.</p>
-      </details>
-      <details>
-        <summary>Posso usar a mesma chave em dois produtos?</summary>
-        <p>Não. Cada chave é exclusiva para um produto. Solicite emissão separada no painel do gerador.</p>
-      </details>
-      <details>
-        <summary>Perdi minha chave — o que fazer?</summary>
-        <p>O administrador Inova TI pode consultar a chave no painel em Clientes → Gerenciar → Licenças do cliente.</p>
-      </details>
-      <a class="back-link" href="/">← Voltar ao início</a>
-    </section>
   </main>
 
-  <footer class="footer">
-    <p>&copy; 2026 Inova TI · Gerador de Licenças</p>
-  </footer>
+  {% include "public/_footer.html" %}
 </body>
 </html>
