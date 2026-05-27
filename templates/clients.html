@@ -66,6 +66,7 @@
                 <span>
                   <strong>{{ sys.name }}</strong>
                   {% if sys.status == 'construction' %}<span class="badge badge-grace">Em construção</span>{% endif %}
+                  {% if sys.status == 'planned' %}<span class="badge">Em breve</span>{% endif %}
                 </span>
               </label>
               {% endfor %}

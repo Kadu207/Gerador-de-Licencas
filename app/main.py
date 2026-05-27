@@ -27,6 +27,7 @@ from app.catalog import (
     parse_contracted_products,
     product_labels_dict,
     seed_software_catalog,
+    selectable_product_slugs,
     selectable_products,
     serialize_contracted_products,
     sync_product_labels_from_catalog,
@@ -43,6 +44,7 @@ from app.services import (
     renew_license,
     revoke_license,
     summarize_client_licenses,
+    update_client_contracted_systems,
 )
 from app.sync import ensure_remote_tables, test_connections
 
@@ -399,6 +401,8 @@ def client_detail(
             "licenses": enriched,
             "contracted_systems": contracted,
             "contracted_labels": [labels.get(s, s) for s in contracted],
+            "system_options": selectable_products(db),
+            "status_labels": CATALOG_STATUS_LABELS,
             "products": labels,
             "licensable_systems": licensable_products(db),
             "periods": PERIOD_LABELS,
@@ -406,8 +410,29 @@ def client_detail(
             "block_days": settings.block_after_days,
             "cancel_days": settings.cancel_after_days,
             "stripe_enabled": stripe_enabled(),
+            "saved": request.query_params.get("saved"),
         },
     )
+
+
+@app.post("/clients/{client_id}/contracted-systems")
+def client_update_contracted_systems(
+    client_id: int,
+    contracted_systems: list[str] = Form(default=[]),
+    db: Session = Depends(get_db),
+    user: Operator = Depends(get_current_user),
+):
+    try:
+        update_client_contracted_systems(
+            db,
+            operator=user.username,
+            client_id=client_id,
+            slugs=contracted_systems,
+            allowed_slugs=selectable_product_slugs(db),
+        )
+    except ValueError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    return RedirectResponse(f"/clients/{client_id}?saved=contracted", status_code=303)
 
 
 @app.post("/clients/{client_id}/licenses")

@@ -141,13 +141,21 @@ def licensable_products(db: Session) -> list[SoftwareProduct]:
 
 
 def selectable_products(db: Session) -> list[SoftwareProduct]:
-    """Sistemas exibidos no cadastro de cliente (ativos + em construção)."""
+    """Sistemas exibidos no cadastro/edição de cliente."""
     return (
         db.query(SoftwareProduct)
-        .filter(SoftwareProduct.status.in_([STATUS_ACTIVE, STATUS_CONSTRUCTION]))
+        .filter(
+            SoftwareProduct.status.in_(
+                [STATUS_ACTIVE, STATUS_CONSTRUCTION, STATUS_PLANNED]
+            )
+        )
         .order_by(SoftwareProduct.sort_order)
         .all()
     )
+
+
+def selectable_product_slugs(db: Session) -> set[str]:
+    return {p.slug for p in selectable_products(db)}
 
 
 def format_product_list(slugs: list[str], labels: dict[str, str]) -> str:

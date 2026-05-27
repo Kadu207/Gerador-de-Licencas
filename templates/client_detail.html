@@ -16,16 +16,34 @@
       · Status: {{ client.status }}
     </p>
 
-    {% if contracted_labels %}
+    {% if saved == 'contracted' %}
+    <div class="alert alert-info">Sistemas contratados atualizados com sucesso.</div>
+    {% endif %}
+
     <div class="card">
       <h2>Sistemas contratados</h2>
-      <ul class="tag-list">
-        {% for name in contracted_labels %}
-        <li><span class="tag">{{ name }}</span></li>
-        {% endfor %}
-      </ul>
+      <p class="field-hint">Marque os softwares Inova TI contratados ou em negociação por este cliente.</p>
+      <form method="post" action="/clients/{{ client.id }}/contracted-systems">
+        <div class="system-checkboxes">
+          {% for sys in system_options %}
+          <label class="system-check">
+            <input type="checkbox" name="contracted_systems" value="{{ sys.slug }}"{% if sys.slug in contracted_systems %} checked{% endif %} />
+            <span>
+              <strong>{{ sys.name }}</strong>
+              {% if sys.status == 'construction' %}
+              <span class="badge badge-grace">{{ status_labels.get('construction', 'Em construção') }}</span>
+              {% elif sys.status == 'planned' %}
+              <span class="badge">{{ status_labels.get('planned', 'Em breve') }}</span>
+              {% endif %}
+            </span>
+          </label>
+          {% endfor %}
+        </div>
+        <div class="actions">
+          <button class="btn btn-primary btn-sm" type="submit">Salvar sistemas</button>
+        </div>
+      </form>
     </div>
-    {% endif %}
 
     <div class="card">
       <h2>Emitir nova licença</h2>

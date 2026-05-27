@@ -656,6 +656,10 @@ th { background: #faf9f8; font-weight: 600; }
   color: var(--ms-blue);
 }
 
+.plan-row__delete {
+  margin-top: 8px;
+}
+
 @media (max-width: 768px) {
   .portfolio-edit {
     grid-template-columns: 1fr;

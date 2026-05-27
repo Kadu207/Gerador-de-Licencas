@@ -237,6 +237,34 @@ def create_client(
     return client
 
 
+def update_client_contracted_systems(
+    db: Session,
+    *,
+    operator: str,
+    client_id: int,
+    slugs: list[str],
+    allowed_slugs: set[str] | None = None,
+) -> Client:
+    client = db.query(Client).filter(Client.id == client_id).first()
+    if not client:
+        raise ValueError("Cliente não encontrado")
+
+    clean = sorted({s.strip() for s in slugs if s and s.strip()})
+    if allowed_slugs is not None:
+        clean = [s for s in clean if s in allowed_slugs]
+
+    client.contracted_products = serialize_contracted_products(clean)
+    db.commit()
+    db.refresh(client)
+    log_action(
+        db,
+        operator,
+        "client_contracted_update",
+        f"Cliente {client.id} — sistemas: {', '.join(clean) or 'nenhum'}",
+    )
+    return client
+
+
 def issue_license(
     db: Session,
     *,
