@@ -3,17 +3,19 @@ from __future__ import annotations
 
 import os
 
+# Força ambiente de teste antes de importar app (evita .env local / Postgres)
+os.environ["LOCAL_DATABASE_URL"] = "sqlite:///./data/test_gerador.db"
+os.environ["PRODUCT_API_KEY"] = "test-api-key-e2e"
+os.environ["SECRET_KEY"] = "test-secret-key-min-32-chars-long"
+os.environ["ADMIN_USERNAME"] = "admin"
+os.environ["ADMIN_PASSWORD"] = "Test@Admin2026!"
+os.environ["SYNC_REMOTE_ENABLED"] = "false"
+os.environ.pop("POSTGRES_APP_PASSWORD", None)
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-
-os.environ.setdefault("LOCAL_DATABASE_URL", "sqlite:///./data/test_gerador.db")
-os.environ.setdefault("PRODUCT_API_KEY", "test-api-key-e2e")
-os.environ.setdefault("SECRET_KEY", "test-secret-key-min-32-chars-long")
-os.environ.setdefault("ADMIN_USERNAME", "admin")
-os.environ.setdefault("ADMIN_PASSWORD", "Test@Admin2026!")
-os.environ.setdefault("SYNC_REMOTE_ENABLED", "false")
 
 from app.auth import hash_password
 from app.licensing import generate_license_key, is_valid_license_key_format
@@ -25,6 +27,9 @@ from app.main import app
 def client():
     from app.config import settings
     from app import models
+
+    object.__setattr__(settings, "local_database_url", os.environ["LOCAL_DATABASE_URL"])
+    object.__setattr__(settings, "product_api_key", os.environ["PRODUCT_API_KEY"])
 
     engine = create_engine(settings.local_database_url, connect_args={"check_same_thread": False})
     Base.metadata.drop_all(bind=engine)
@@ -97,9 +102,9 @@ def test_e2e_client_license_validate(client: TestClient):
             "clinica_id": 1,
             "product": "lab",
         },
-        headers={"X-License-Api-Key": "test-api-key-e2e"},
+        headers={"X-License-Api-Key": os.environ["PRODUCT_API_KEY"]},
     )
-    assert vr.status_code == 200
+    assert vr.status_code == 200, vr.text
     body = vr.json()
     assert body["valid"] is True
     assert "daysRemaining" in body
@@ -121,7 +126,7 @@ def test_revoke_license(client: TestClient):
     vr = client.post(
         "/api/v1/licenses/validate",
         json={"license_key": lic.license_key, "clinica_id": 99, "product": "vde"},
-        headers={"X-License-Api-Key": "test-api-key-e2e"},
+        headers={"X-License-Api-Key": os.environ["PRODUCT_API_KEY"]},
     )
-    assert vr.status_code == 200
+    assert vr.status_code == 200, vr.text
     assert vr.json()["valid"] is False

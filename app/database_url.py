@@ -17,13 +17,18 @@ def _build_postgres_url() -> str | None:
 
 
 def resolve_database_url(configured: str = "") -> str:
-    """Prioridade: LOCAL_DATABASE_URL (Postgres) → configured (Postgres) → POSTGRES_* → sqlite."""
+    """Prioridade: Postgres explícito → SQLite explícito → POSTGRES_* → fallback."""
     env_url = os.environ.get("LOCAL_DATABASE_URL", "").strip()
     cfg = (configured or "").strip()
 
     if env_url.startswith("postgresql"):
         return env_url
     if cfg.startswith("postgresql"):
+        return cfg
+
+    if env_url.startswith("sqlite"):
+        return env_url
+    if cfg.startswith("sqlite"):
         return cfg
 
     built = _build_postgres_url()
