@@ -39,7 +39,7 @@ templates = Jinja2Templates(directory=str(ROOT / "templates"))
 templates.env.filters["tojson"] = json.dumps
 
 app = FastAPI(
-    title="Inova TI — Gerenciador de Licenças",
+    title="Gerador de Licenças — Inova TI",
     version="2.0.0",
     description="API central de licenciamento para Excellence Cloud, Dental Lab e VDE Incorporadora.",
 )

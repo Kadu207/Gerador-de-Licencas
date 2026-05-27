@@ -3,23 +3,29 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
-  <title>Inova TI — Gerenciador de Licenças</title>
+  <link rel="icon" href="/static/inova-ti-logo.jpg" type="image/jpeg" />
+  <title>Gerador de Licenças — Inova TI</title>
   <link rel="stylesheet" href="/static/public/landing.css" />
 </head>
 <body>
-  <header class="hero">
-    <nav class="nav">
-      <span class="logo"><img src="/static/favicon.svg" alt="" class="logo-icon" /> Inova TI</span>
-      <div class="nav-links">
-        <a href="/suporte">Suporte</a>
-        {% if user %}
-        <a href="/dashboard" class="btn-nav">Painel</a>
-        {% else %}
-        <a href="/app/login" class="btn-nav">Área administrativa</a>
-        {% endif %}
-      </div>
+  <header class="site-header">
+    <a href="/" class="logo">
+      <img src="/static/inova-ti-logo.jpg" alt="Inova TI" width="36" height="36" />
+      <span>Inova TI · Licenças</span>
+    </a>
+    <nav class="header-actions">
+      <a href="/suporte">Suporte</a>
+      {% if user %}
+      <a href="/dashboard" class="btn-nav">Painel</a>
+      {% else %}
+      <a href="/app/login" class="btn-nav">Entrar</a>
+      {% endif %}
     </nav>
+  </header>
+
+  <section class="hero">
+    <img class="hero-bg" src="/static/public/hero-bg.jpg" alt="" fetchpriority="high" />
+    <div class="hero-overlay" aria-hidden="true"></div>
     <div class="hero-content">
       <h1>Gerenciamento centralizado de licenças</h1>
       <p class="lead">
@@ -28,10 +34,10 @@
       </p>
       <div class="hero-actions">
         <a href="/app/login" class="btn btn-primary">Acessar painel</a>
-        <a href="/suporte" class="btn btn-secondary">Como renovar</a>
+        <a href="/suporte" class="btn btn-secondary">Central de suporte</a>
       </div>
     </div>
-  </header>
+  </section>
 
   <section class="features">
     <div class="feature">
