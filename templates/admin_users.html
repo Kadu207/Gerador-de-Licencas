@@ -7,18 +7,11 @@
   <title>Administração — Gerador de Licenças Inova TI</title>
   <link rel="stylesheet" href="/static/styles.css" />
 </head>
-<body>
-  <header class="topbar">
-    <div class="brand"><img src="/static/inova-ti-logo.jpg" alt="" class="brand-icon" /> Gerador de Licenças · Inova TI</div>
-    <nav>
-      <a href="/dashboard">Dashboard</a>
-      <a href="/clients">Clientes</a>
-      <a href="/admin/users">Administração</a>
-      <a href="/logout">Sair</a>
-    </nav>
-  </header>
-
-  <main class="container">
+<body class="admin-app">
+  {% include "_sidebar.html" %}
+  <div class="admin-main">
+    {% include "_admin_topbar.html" %}
+    <main class="admin-content container">
     <h1>Administração de usuários</h1>
     <p class="subtitle">Cadastre operadores, altere senhas e ative ou desative acessos ao painel.</p>
 
@@ -66,6 +59,8 @@
         </tbody>
       </table>
     </div>
-  </main>
+    </main>
+  </div>
+  <script src="/static/admin.js"></script>
 </body>
 </html>

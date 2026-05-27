@@ -7,107 +7,115 @@
   <title>Clientes — Gerador de Licenças Inova TI</title>
   <link rel="stylesheet" href="/static/styles.css" />
 </head>
-<body>
-  <header class="topbar">
-    <div class="brand"><img src="/static/inova-ti-logo.jpg" alt="" class="brand-icon" /> Gerador de Licenças · Inova TI</div>
-    <nav>
-      <a href="/dashboard">Dashboard</a>
-      <a href="/clients">Clientes</a>
-      <a href="/admin/users">Administração</a>
-      <a href="/logout">Sair</a>
-    </nav>
-  </header>
-
-  <main class="container">
-    <h1>Clientes</h1>
-    <p class="subtitle">Preencha todos os dados abaixo:</p>
-
-    <div class="card">
-      <h2>Novo cliente</h2>
-      <form method="post" action="/clients">
-        <div class="grid-2">
-          <div><label>Nome fantasia *</label><input name="nome" required /></div>
-          <div><label>Razão social</label><input name="razao_social" id="razao_social" /></div>
-          <div>
-            <label>Tipo documento</label>
-            <select name="document_type" id="document_type">
-              <option value="cnpj">CNPJ</option>
-              <option value="cpf">CPF</option>
-            </select>
-          </div>
-          <div>
-            <label>CPF / CNPJ</label>
-            <input id="document_field" name="cnpj" data-mask="cnpj" />
-            <p id="doc_hint" class="field-hint">CNPJ: dados da Receita Federal são preenchidos automaticamente.</p>
-          </div>
-          <div><label>E-mail 01</label><input name="email" type="email" /></div>
-          <div><label>E-mail 02</label><input name="email_02" type="email" /></div>
-          <div><label>Telefone 01</label><input name="telefone" data-mask="phone" /></div>
-          <div><label>Telefone 02</label><input name="telefone_02" data-mask="phone" /></div>
-          <div><label>Telefone 03</label><input name="telefone_03" data-mask="phone" /></div>
-          <div>
-            <label>Matriz (filial de)</label>
-            <select name="parent_client_id">
-              <option value="">— Matriz —</option>
-              {% for p in parent_options %}
-              <option value="{{ p.id }}">{{ p.nome }}</option>
-              {% endfor %}
-            </select>
-          </div>
-          <div><label>ID vínculo produto 01</label><input name="clinica_id_erp" placeholder="Ex: 1" /></div>
-          <div><label>ID vínculo produto 02</label><input name="clinica_id_lab" placeholder="Opcional" /></div>
+<body class="admin-app">
+  {% include "_sidebar.html" %}
+  <div class="admin-main">
+    {% include "_admin_topbar.html" %}
+    <main class="admin-content container">
+      <div class="page-header">
+        <div>
+          <h1>Clientes</h1>
+          <p class="subtitle">Cadastro e gerenciamento de clientes vinculados a licenças.</p>
         </div>
-
-        <h3 class="section-title">Endereço</h3>
-        <div class="grid-2">
-          <div><label>CEP</label><input name="cep" id="cep" data-mask="cep" /></div>
-          <div><label>UF</label><input name="uf" id="uf" maxlength="2" /></div>
-          <div class="span-2"><label>Logradouro</label><input name="logradouro" id="logradouro" /></div>
-          <div><label>Número</label><input name="numero" /></div>
-          <div><label>Complemento</label><input name="complemento" /></div>
-          <div><label>Bairro</label><input name="bairro" id="bairro" /></div>
-          <div><label>Cidade</label><input name="cidade" id="cidade" /></div>
-          <div class="span-2"><label>Observações</label><textarea name="notes"></textarea></div>
-        </div>
-        <div class="actions"><button class="btn btn-primary" type="submit">Cadastrar cliente</button></div>
-      </form>
-    </div>
-
-    <div class="card">
-      <h2>Clientes cadastrados</h2>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Cliente</th>
-              <th>Produto(s)</th>
-              <th>Status da licença</th>
-              <th>Pagamento em dia</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for row in client_rows %}
-            {% set c = row.client %}
-            <tr>
-              <td>
-                <strong>{{ c.nome }}</strong>
-                {% if c.parent_client_id %}<span class="badge">Filial</span>{% endif %}
-                <br><span class="muted-sm">{{ c.cnpj or c.cpf or '—' }}</span>
-              </td>
-              <td>{{ row.summary.products }}</td>
-              <td>{{ row.summary.license_status }}</td>
-              <td>{{ row.summary.payment_ok }}</td>
-              <td><a class="btn btn-secondary btn-sm" href="/clients/{{ c.id }}">Gerenciar</a></td>
-            </tr>
-            {% else %}
-            <tr><td colspan="5">Nenhum cliente cadastrado.</td></tr>
-            {% endfor %}
-          </tbody>
-        </table>
+        <button type="button" class="btn btn-primary" data-open-modal="client-modal">+ Cadastrar cliente</button>
       </div>
-    </div>
-  </main>
+
+      <dialog id="client-modal" class="modal-dialog">
+        <div class="modal-dialog__inner">
+          <div class="modal-dialog__header">
+            <h2>Novo cliente</h2>
+            <button type="button" class="modal-close" data-close-modal aria-label="Fechar">&times;</button>
+          </div>
+          <form method="post" action="/clients">
+            <div class="grid-2">
+              <div><label>Nome fantasia *</label><input name="nome" required /></div>
+              <div><label>Razão social</label><input name="razao_social" id="razao_social" /></div>
+              <div>
+                <label>Tipo documento</label>
+                <select name="document_type" id="document_type">
+                  <option value="cnpj">CNPJ</option>
+                  <option value="cpf">CPF</option>
+                </select>
+              </div>
+              <div>
+                <label>CPF / CNPJ</label>
+                <input id="document_field" name="cnpj" data-mask="cnpj" />
+                <p id="doc_hint" class="field-hint">CNPJ: dados da Receita Federal são preenchidos automaticamente.</p>
+              </div>
+              <div><label>E-mail 01</label><input name="email" type="email" /></div>
+              <div><label>E-mail 02</label><input name="email_02" type="email" /></div>
+              <div><label>Telefone 01</label><input name="telefone" data-mask="phone" /></div>
+              <div><label>Telefone 02</label><input name="telefone_02" data-mask="phone" /></div>
+              <div><label>Telefone 03</label><input name="telefone_03" data-mask="phone" /></div>
+              <div>
+                <label>Matriz (filial de)</label>
+                <select name="parent_client_id">
+                  <option value="">— Matriz —</option>
+                  {% for p in parent_options %}
+                  <option value="{{ p.id }}">{{ p.nome }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div><label>ID vínculo produto 01</label><input name="clinica_id_erp" placeholder="Ex: 1" /></div>
+              <div><label>ID vínculo produto 02</label><input name="clinica_id_lab" placeholder="Opcional" /></div>
+            </div>
+
+            <h3 class="section-title">Endereço</h3>
+            <div class="grid-2">
+              <div><label>CEP</label><input name="cep" id="cep" data-mask="cep" /></div>
+              <div><label>UF</label><input name="uf" id="uf" maxlength="2" /></div>
+              <div class="span-2"><label>Logradouro</label><input name="logradouro" id="logradouro" /></div>
+              <div><label>Número</label><input name="numero" /></div>
+              <div><label>Complemento</label><input name="complemento" /></div>
+              <div><label>Bairro</label><input name="bairro" id="bairro" /></div>
+              <div><label>Cidade</label><input name="cidade" id="cidade" /></div>
+              <div class="span-2"><label>Observações</label><textarea name="notes"></textarea></div>
+            </div>
+            <div class="actions">
+              <button type="button" class="btn btn-secondary" data-close-modal>Cancelar</button>
+              <button class="btn btn-primary" type="submit">Salvar cliente</button>
+            </div>
+          </form>
+        </div>
+      </dialog>
+
+      <div class="card">
+        <h2>Clientes cadastrados</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Cliente</th>
+                <th>Produto(s)</th>
+                <th>Status da licença</th>
+                <th>Pagamento em dia</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in client_rows %}
+              {% set c = row.client %}
+              <tr>
+                <td>
+                  <strong>{{ c.nome }}</strong>
+                  {% if c.parent_client_id %}<span class="badge">Filial</span>{% endif %}
+                  <br><span class="muted-sm">{{ c.cnpj or c.cpf or '—' }}</span>
+                </td>
+                <td>{{ row.summary.products }}</td>
+                <td>{{ row.summary.license_status }}</td>
+                <td>{{ row.summary.payment_ok }}</td>
+                <td><a class="btn btn-secondary btn-sm" href="/clients/{{ c.id }}">Gerenciar</a></td>
+              </tr>
+              {% else %}
+              <tr><td colspan="5">Nenhum cliente cadastrado.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="/static/admin.js"></script>
   <script src="/static/masks.js"></script>
 </body>
 </html>

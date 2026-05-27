@@ -36,3 +36,5 @@ backups/
 
 # Docker volumes locais
 license_pg_data/
+
+_lovable-import/

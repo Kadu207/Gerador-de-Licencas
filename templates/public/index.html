@@ -7,16 +7,28 @@
 <body>
   {% include "public/_header.html" %}
 
-  <section class="hero" role="banner">
-    <div class="hero__inner">
-      <h1 class="hero__title">Gerenciamento centralizado de licenças</h1>
-      <p class="hero__lead">
-        Emissão, vínculo e controle de licenças digitais para todos os produtos da Inova TI —
-        cada cliente com chaves independentes de 25 caracteres.
-      </p>
-      <div class="hero__actions">
-        <a href="/app/login" class="btn btn--primary">Acessar painel</a>
-        <a href="/suporte" class="btn btn--secondary">Central de suporte</a>
+  <section class="hero-split" role="banner">
+    <div class="hero-split__photo">
+      <img
+        src="/static/public/hero-bg.jpg"
+        alt="Profissionais observando o horizonte ao pôr do sol"
+        width="1920"
+        height="1280"
+        fetchpriority="high"
+      />
+      <div class="hero-split__fade" aria-hidden="true"></div>
+    </div>
+    <div class="hero-split__content">
+      <div class="hero-split__inner">
+        <h1 class="hero-split__title">Gerenciamento centralizado de licenças</h1>
+        <p class="hero-split__lead">
+          Emissão, vínculo e controle de licenças digitais para todos os produtos da Inova TI —
+          cada cliente com chaves independentes de 25 caracteres.
+        </p>
+        <div class="hero-split__actions">
+          <a href="/app/login" class="btn btn--primary">Acessar painel</a>
+          <a href="/suporte" class="btn btn--secondary">Central de suporte</a>
+        </div>
       </div>
     </div>
   </section>
@@ -24,14 +36,23 @@
   <section class="features" aria-labelledby="features-title">
     <div class="features__grid">
       <article class="feature-card">
+        <div class="feature-card__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+        </div>
         <h3 id="features-title">Chaves de 25 caracteres</h3>
         <p>Emissão segura com validação remota via API HTTPS.</p>
       </article>
       <article class="feature-card">
+        <div class="feature-card__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </div>
         <h3>Alertas automáticos</h3>
         <p>Notificações por e-mail antes do vencimento da licença.</p>
       </article>
       <article class="feature-card">
+        <div class="feature-card__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        </div>
         <h3>Pagamentos integrados</h3>
         <p>Cartão, PIX e boleto com confirmação automática de renovação.</p>
       </article>
@@ -39,5 +60,6 @@
   </section>
 
   {% include "public/_footer.html" %}
+  <script src="/static/public/site.js"></script>
 </body>
 </html>
