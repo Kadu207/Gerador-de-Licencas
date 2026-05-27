@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  {% include "_admin_head.html" %}
+  <title>Portfólio de sistemas — Gerador de Licenças Inova TI</title>
+</head>
+<body class="admin-app">
+  {% include "_sidebar.html" %}
+  <div class="admin-main">
+    {% include "_admin_topbar.html" %}
+    <main class="admin-content container">
+      <div class="page-header">
+        <div>
+          <h1>Portfólio de sistemas</h1>
+          <p class="subtitle">Catálogo de softwares Inova TI — descrições, planos e valores comerciais.</p>
+        </div>
+      </div>
+
+      {% if saved %}
+      <div class="alert alert-info">Alterações salvas com sucesso.</div>
+      {% endif %}
+
+      {% for product in products %}
+      <article class="card portfolio-card" id="system-{{ product.slug }}">
+        <div class="portfolio-card__head">
+          <div>
+            <h2>{{ product.name }}</h2>
+            <span class="badge badge-{{ 'active' if product.status == 'active' else ('grace' if product.status == 'construction' else 'blocked') }}">
+              {{ status_labels.get(product.status, product.status) }}
+            </span>
+            {% if not product.license_enabled %}
+            <span class="badge">Sem emissão de licença</span>
+            {% endif %}
+          </div>
+          <code class="muted-sm">{{ product.slug }}</code>
+        </div>
+
+        <form method="post" action="/systems/products/{{ product.id }}/update" class="portfolio-edit">
+          <div class="span-2">
+            <label>Nome comercial</label>
+            <input name="name" value="{{ product.name }}" required />
+          </div>
+          <div class="span-2">
+            <label>Descrição</label>
+            <textarea name="description" rows="3">{{ product.description }}</textarea>
+          </div>
+          <div>
+            <label>Status</label>
+            <select name="status">
+              {% for key, label in status_labels.items() %}
+              <option value="{{ key }}"{% if product.status == key %} selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="actions">
+            <button type="submit" class="btn btn-secondary btn-sm">Salvar sistema</button>
+          </div>
+        </form>
+
+        <h3 class="section-title">Planos e custos</h3>
+        {% if product.plans %}
+        <div class="plan-list">
+          {% for plan in product.plans %}
+          <div class="plan-row card" style="padding:12px;margin-bottom:10px">
+            <form method="post" action="/systems/plans/{{ plan.id }}/update" class="grid-2">
+              <div><label>Plano</label><input name="name" value="{{ plan.name }}" required /></div>
+              <div>
+                <label>Periodicidade</label>
+                <select name="billing_period">
+                  {% for key, label in billing_labels.items() %}
+                  <option value="{{ key }}"{% if plan.billing_period == key %} selected{% endif %}>{{ label }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div><label>Valor (R$)</label><input name="price" value="{{ '%.2f'|format(plan.price or 0) }}" /></div>
+              <div>
+                <label>Ativo</label>
+                <select name="active">
+                  <option value="1"{% if plan.active %} selected{% endif %}>Sim</option>
+                  <option value="0"{% if not plan.active %} selected{% endif %}>Não</option>
+                </select>
+              </div>
+              <div class="span-2"><label>Descrição</label><input name="description" value="{{ plan.description }}" /></div>
+              <div class="actions span-2">
+                <button type="submit" class="btn btn-secondary btn-sm">Salvar plano</button>
+            </form>
+                <form method="post" action="/systems/plans/{{ plan.id }}/delete" style="display:inline" onsubmit="return confirm('Remover este plano?')">
+                  <button type="submit" class="btn btn-danger btn-sm">Excluir</button>
+                </form>
+              </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p class="field-hint">Nenhum plano cadastrado ainda.</p>
+        {% endif %}
+
+        <details class="portfolio-add-plan">
+          <summary>+ Adicionar plano</summary>
+          <form method="post" action="/systems/products/{{ product.id }}/plans" class="grid-2" style="margin-top:12px">
+            <div><label>Nome do plano</label><input name="name" required placeholder="Ex: Plano Mensal" /></div>
+            <div>
+              <label>Periodicidade</label>
+              <select name="billing_period">
+                {% for key, label in billing_labels.items() %}
+                <option value="{{ key }}">{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div><label>Valor (R$)</label><input name="price" value="0.00" /></div>
+            <div><label>Descrição</label><input name="description" placeholder="Opcional" /></div>
+            <div class="actions span-2">
+              <button type="submit" class="btn btn-primary btn-sm">Adicionar plano</button>
+            </div>
+          </form>
+        </details>
+      </article>
+      {% else %}
+      <div class="card"><p>Nenhum sistema no catálogo. Reinicie o serviço para carregar o seed inicial.</p></div>
+      {% endfor %}
+    </main>
+  </div>
+  <script src="/static/admin.js"></script>
+</body>
+</html>

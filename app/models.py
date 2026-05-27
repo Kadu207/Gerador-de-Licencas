@@ -50,6 +50,7 @@ class Client(Base):
     telefone_03 = Column(String(40), default="")
     clinica_id_erp = Column(Integer, nullable=True, index=True)
     clinica_id_lab = Column(Integer, nullable=True, index=True)
+    contracted_products = Column(Text, default="[]")
     status = Column(String(32), default="active")
     notes = Column(Text, default="")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -102,6 +103,41 @@ class LicenseRecord(Base):
     client = relationship("Client", back_populates="licenses")
     alert_logs = relationship("LicenseAlertLog", back_populates="license", cascade="all, delete-orphan")
     payments = relationship("Payment", back_populates="license", cascade="all, delete-orphan")
+
+
+class SoftwareProduct(Base):
+    __tablename__ = "software_products"
+    id = Column(Integer, primary_key=True)
+    slug = Column(String(32), unique=True, nullable=False, index=True)
+    name = Column(String(160), nullable=False)
+    description = Column(Text, default="")
+    status = Column(String(24), default="active")
+    sort_order = Column(Integer, default=0)
+    license_enabled = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    plans = relationship(
+        "SoftwarePlan",
+        back_populates="product",
+        cascade="all, delete-orphan",
+        order_by="SoftwarePlan.sort_order",
+    )
+
+
+class SoftwarePlan(Base):
+    __tablename__ = "software_plans"
+    id = Column(Integer, primary_key=True)
+    product_id = Column(Integer, ForeignKey("software_products.id"), nullable=False, index=True)
+    name = Column(String(120), nullable=False)
+    billing_period = Column(String(24), default="annual")
+    price = Column(Numeric(12, 2), default=0)
+    description = Column(Text, default="")
+    sort_order = Column(Integer, default=0)
+    active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    product = relationship("SoftwareProduct", back_populates="plans")
 
 
 class LicenseAlertLog(Base):

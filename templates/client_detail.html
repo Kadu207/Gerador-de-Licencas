@@ -12,19 +12,30 @@
     <h1>{{ client.nome }}</h1>
     <p class="subtitle">
       {% if parent %}Filial de <strong>{{ parent.nome }}</strong> · {% endif %}
-      Clínica ERP: {{ client.clinica_id_erp or '—' }} · Lab: {{ client.clinica_id_lab or client.clinica_id_erp or '—' }}
+      Excellence Cloud ID: {{ client.clinica_id_erp or '—' }} · Dental Lab ID: {{ client.clinica_id_lab or client.clinica_id_erp or '—' }}
       · Status: {{ client.status }}
     </p>
+
+    {% if contracted_labels %}
+    <div class="card">
+      <h2>Sistemas contratados</h2>
+      <ul class="tag-list">
+        {% for name in contracted_labels %}
+        <li><span class="tag">{{ name }}</span></li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
 
     <div class="card">
       <h2>Emitir nova licença</h2>
       <form method="post" action="/clients/{{ client.id }}/licenses">
         <div class="grid-3">
           <div>
-            <label>Software</label>
+            <label>Sistema</label>
             <select name="produto" required>
-              {% for key, label in products.items() %}
-              <option value="{{ key }}">{{ label }}</option>
+              {% for sys in licensable_systems %}
+              <option value="{{ sys.slug }}">{{ sys.name }}</option>
               {% endfor %}
             </select>
           </div>
@@ -56,7 +67,7 @@
         <thead>
           <tr>
             <th>Chave</th>
-            <th>Produto</th>
+            <th>Sistema</th>
             <th>Período</th>
             <th>Validade</th>
             <th>Restante</th>
@@ -70,7 +81,7 @@
           {% set eff = row.effective %}
           <tr>
             <td class="mono">{{ lic.license_key }}</td>
-            <td>{{ lic.produto }}</td>
+            <td>{{ products.get(lic.produto, lic.produto) }}</td>
             <td>{{ lic.periodo }}</td>
             <td>{{ lic.ends_at.strftime('%d/%m/%Y') if lic.ends_at else '—' }}</td>
             <td>{{ eff.remainingLabel }}</td>

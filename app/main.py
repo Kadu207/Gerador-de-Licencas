@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -19,8 +20,19 @@ from app.infra.stripe_payments import create_checkout_session, stripe_enabled
 from app.infra.viacep import fetch_address_by_cep
 from app.jobs.alerts import run_license_alerts
 from app.dashboard_stats import build_dashboard_stats
+from app.catalog import (
+    BILLING_LABELS,
+    STATUS_LABELS as CATALOG_STATUS_LABELS,
+    licensable_products,
+    parse_contracted_products,
+    product_labels_dict,
+    seed_software_catalog,
+    selectable_products,
+    serialize_contracted_products,
+    sync_product_labels_from_catalog,
+)
 from app.licensing import PAYMENT_PLAN_LABELS, PERIOD_LABELS, PRODUCT_LABELS, STATUS_CANCELLED
-from app.models import Client, LicenseRecord, Notification, Operator, Payment, SessionLocal, init_db
+from app.models import Client, LicenseRecord, Notification, Operator, Payment, SessionLocal, SoftwarePlan, SoftwareProduct, init_db
 from app.services import (
     cancel_client,
     create_client,
@@ -132,6 +144,8 @@ def startup() -> None:
 
     db = SessionLocal()
     try:
+        seed_software_catalog(db)
+        sync_product_labels_from_catalog(db)
         if not db.query(Operator).first():
             db.add(
                 Operator(
@@ -239,6 +253,7 @@ def logout():
 @app.get("/dashboard", response_class=HTMLResponse)
 def dashboard(request: Request, db: Session = Depends(get_db), user: Operator = Depends(get_current_user)):
     stats = build_dashboard_stats(db)
+    labels = product_labels_dict(db)
     return templates.TemplateResponse(
         "dashboard.html",
         {
@@ -246,7 +261,7 @@ def dashboard(request: Request, db: Session = Depends(get_db), user: Operator = 
             "user": user,
             "connections": test_connections(),
             "stats": stats,
-            "products": PRODUCT_LABELS,
+            "products": labels,
             "periods": PERIOD_LABELS,
             "payment_plans": PAYMENT_PLAN_LABELS,
         },
@@ -255,12 +270,21 @@ def dashboard(request: Request, db: Session = Depends(get_db), user: Operator = 
 
 @app.get("/clients", response_class=HTMLResponse)
 def clients_page(request: Request, db: Session = Depends(get_db), user: Operator = Depends(get_current_user)):
+    labels = product_labels_dict(db)
     clients = db.query(Client).order_by(Client.nome.asc()).all()
     parent_options = db.query(Client).filter(Client.parent_client_id.is_(None)).order_by(Client.nome).all()
     client_rows = []
     for c in clients:
         licenses = db.query(LicenseRecord).filter(LicenseRecord.client_id == c.id).all()
-        client_rows.append({"client": c, "summary": summarize_client_licenses(licenses)})
+        contracted = parse_contracted_products(c.contracted_products)
+        client_rows.append(
+            {
+                "client": c,
+                "summary": summarize_client_licenses(
+                    licenses, contracted_slugs=contracted, labels=labels
+                ),
+            }
+        )
     return templates.TemplateResponse(
         "clients.html",
         {
@@ -268,7 +292,8 @@ def clients_page(request: Request, db: Session = Depends(get_db), user: Operator
             "user": user,
             "client_rows": client_rows,
             "parent_options": parent_options,
-            "products": PRODUCT_LABELS,
+            "system_options": selectable_products(db),
+            "products": labels,
             "periods": PERIOD_LABELS,
         },
     )
@@ -297,6 +322,7 @@ def clients_create(
     uf: str = Form(""),
     cep: str = Form(""),
     notes: str = Form(""),
+    contracted_systems: list[str] = Form(default=[]),
     db: Session = Depends(get_db),
     user: Operator = Depends(get_current_user),
 ):
@@ -324,6 +350,7 @@ def clients_create(
         clinica_id_erp=cid_erp,
         clinica_id_lab=cid_lab,
         parent_client_id=parent_id,
+        contracted_products=serialize_contracted_products(contracted_systems),
         notes=notes,
         address={
             "logradouro": logradouro,
@@ -359,6 +386,9 @@ def client_detail(
     if client.parent_client_id:
         parent = db.query(Client).filter(Client.id == client.parent_client_id).first()
 
+    labels = product_labels_dict(db)
+    contracted = parse_contracted_products(client.contracted_products)
+
     return templates.TemplateResponse(
         "client_detail.html",
         {
@@ -367,7 +397,10 @@ def client_detail(
             "client": client,
             "parent": parent,
             "licenses": enriched,
-            "products": PRODUCT_LABELS,
+            "contracted_systems": contracted,
+            "contracted_labels": [labels.get(s, s) for s in contracted],
+            "products": labels,
+            "licensable_systems": licensable_products(db),
             "periods": PERIOD_LABELS,
             "payment_plans": PAYMENT_PLAN_LABELS,
             "block_days": settings.block_after_days,
@@ -496,6 +529,125 @@ def sync_all(db: Session = Depends(get_db), user: Operator = Depends(get_current
     n = refresh_all_licenses(db)
     log_action(db, user.username, "sync_all", f"{n} licenças sincronizadas")
     return RedirectResponse("/dashboard", status_code=303)
+
+
+@app.get("/systems", response_class=HTMLResponse)
+def systems_portfolio(request: Request, db: Session = Depends(get_db), user: Operator = Depends(get_current_user)):
+    products = (
+        db.query(SoftwareProduct)
+        .order_by(SoftwareProduct.sort_order.asc(), SoftwareProduct.name.asc())
+        .all()
+    )
+    return templates.TemplateResponse(
+        "systems.html",
+        {
+            "request": request,
+            "user": user,
+            "products": products,
+            "status_labels": CATALOG_STATUS_LABELS,
+            "billing_labels": BILLING_LABELS,
+            "saved": request.query_params.get("saved"),
+        },
+    )
+
+
+@app.post("/systems/products/{product_id}/update")
+def systems_update_product(
+    product_id: int,
+    name: str = Form(...),
+    description: str = Form(""),
+    status: str = Form("active"),
+    db: Session = Depends(get_db),
+    user: Operator = Depends(get_current_user),
+):
+    product = db.query(SoftwareProduct).filter(SoftwareProduct.id == product_id).first()
+    if not product:
+        raise HTTPException(404, "Sistema não encontrado")
+    product.name = name.strip()
+    product.description = description.strip()
+    if status in CATALOG_STATUS_LABELS:
+        product.status = status
+    db.commit()
+    sync_product_labels_from_catalog(db)
+    log_action(db, user.username, "system_update", f"Catálogo {product.slug}")
+    return RedirectResponse("/systems?saved=1", status_code=303)
+
+
+@app.post("/systems/products/{product_id}/plans")
+def systems_add_plan(
+    product_id: int,
+    name: str = Form(...),
+    billing_period: str = Form("annual"),
+    price: str = Form("0"),
+    description: str = Form(""),
+    db: Session = Depends(get_db),
+    user: Operator = Depends(get_current_user),
+):
+    product = db.query(SoftwareProduct).filter(SoftwareProduct.id == product_id).first()
+    if not product:
+        raise HTTPException(404, "Sistema não encontrado")
+    try:
+        amount = Decimal(price.replace(",", "."))
+    except InvalidOperation as exc:
+        raise HTTPException(422, "Preço inválido") from exc
+    max_order = max((p.sort_order for p in product.plans), default=0)
+    db.add(
+        SoftwarePlan(
+            product_id=product.id,
+            name=name.strip(),
+            billing_period=billing_period,
+            price=amount,
+            description=description.strip(),
+            sort_order=max_order + 10,
+            active=True,
+        )
+    )
+    db.commit()
+    log_action(db, user.username, "plan_create", f"{product.slug} — {name.strip()}")
+    return RedirectResponse("/systems?saved=1", status_code=303)
+
+
+@app.post("/systems/plans/{plan_id}/update")
+def systems_update_plan(
+    plan_id: int,
+    name: str = Form(...),
+    billing_period: str = Form("annual"),
+    price: str = Form("0"),
+    description: str = Form(""),
+    active: str = Form("1"),
+    db: Session = Depends(get_db),
+    user: Operator = Depends(get_current_user),
+):
+    plan = db.query(SoftwarePlan).filter(SoftwarePlan.id == plan_id).first()
+    if not plan:
+        raise HTTPException(404, "Plano não encontrado")
+    try:
+        amount = Decimal(price.replace(",", "."))
+    except InvalidOperation as exc:
+        raise HTTPException(422, "Preço inválido") from exc
+    plan.name = name.strip()
+    plan.billing_period = billing_period
+    plan.price = amount
+    plan.description = description.strip()
+    plan.active = active == "1"
+    db.commit()
+    log_action(db, user.username, "plan_update", f"Plano {plan_id}")
+    return RedirectResponse("/systems?saved=1", status_code=303)
+
+
+@app.post("/systems/plans/{plan_id}/delete")
+def systems_delete_plan(
+    plan_id: int,
+    db: Session = Depends(get_db),
+    user: Operator = Depends(get_current_user),
+):
+    plan = db.query(SoftwarePlan).filter(SoftwarePlan.id == plan_id).first()
+    if not plan:
+        raise HTTPException(404, "Plano não encontrado")
+    db.delete(plan)
+    db.commit()
+    log_action(db, user.username, "plan_delete", f"Plano {plan_id}")
+    return RedirectResponse("/systems?saved=1", status_code=303)
 
 
 @app.get("/admin/users", response_class=HTMLResponse)

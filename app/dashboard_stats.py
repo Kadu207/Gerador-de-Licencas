@@ -7,8 +7,9 @@ from decimal import Decimal
 from sqlalchemy.orm import Session
 
 from app.config import settings
-from app.licensing import PAYMENT_PLAN_LABELS, PRODUCT_LABELS
-from app.models import Client, LicenseRecord, Notification, Payment
+from app.catalog import product_labels_dict
+from app.licensing import PAYMENT_PLAN_LABELS
+from app.models import Client, LicenseRecord, Notification, Payment, SoftwareProduct
 from app.services import effective_for_license
 
 
@@ -19,6 +20,14 @@ def _money(value: Decimal | float | int | None) -> float:
 
 
 def build_dashboard_stats(db: Session) -> dict:
+    labels = product_labels_dict(db)
+    catalog_products = (
+        db.query(SoftwareProduct)
+        .filter(SoftwareProduct.license_enabled.is_(True))
+        .order_by(SoftwareProduct.sort_order)
+        .all()
+    )
+    product_keys = [p.slug for p in catalog_products] or list(labels.keys())
     clients = db.query(Client).all()
     licenses = db.query(LicenseRecord).all()
     payments = db.query(Payment).all()
@@ -63,7 +72,7 @@ def build_dashboard_stats(db: Session) -> dict:
                     "client_name": client.nome if client else "—",
                     "client_id": lic.client_id,
                     "product": lic.produto,
-                    "product_label": PRODUCT_LABELS.get(lic.produto, lic.produto),
+                    "product_label": labels.get(lic.produto, lic.produto),
                     "phase": phase,
                     "days_overdue": eff.get("daysOverdue", 0),
                     "license_key": lic.license_key,
@@ -111,11 +120,11 @@ def build_dashboard_stats(db: Session) -> dict:
             }
         )
 
-    product_labels = [PRODUCT_LABELS.get(k, k) for k in PRODUCT_LABELS]
-    product_values = [product_counts.get(k, 0) for k in PRODUCT_LABELS]
+    product_labels = [labels.get(k, k) for k in product_keys]
+    product_values = [product_counts.get(k, 0) for k in product_keys]
 
-    delinq_labels = [PRODUCT_LABELS.get(k, k) for k in PRODUCT_LABELS]
-    delinq_values = [delinquency_by_product.get(k, 0) for k in PRODUCT_LABELS]
+    delinq_labels = [labels.get(k, k) for k in product_keys]
+    delinq_values = [delinquency_by_product.get(k, 0) for k in product_keys]
 
     status_order = ["active", "grace", "blocked", "cancel_eligible", "expired", "revoked", "cancelled", "pending"]
     status_labels = []

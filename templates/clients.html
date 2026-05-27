@@ -53,8 +53,22 @@
                   {% endfor %}
                 </select>
               </div>
-              <div><label>ID vínculo produto 01</label><input name="clinica_id_erp" placeholder="Ex: 1" /></div>
-              <div><label>ID vínculo produto 02</label><input name="clinica_id_lab" placeholder="Opcional" /></div>
+              <div><label>ID vínculo Excellence Cloud</label><input name="clinica_id_erp" placeholder="Ex: ID clínica no ERP" /></div>
+              <div><label>ID vínculo Dental Lab</label><input name="clinica_id_lab" placeholder="Opcional" /></div>
+            </div>
+
+            <h3 class="section-title">Sistemas contratados</h3>
+            <p class="field-hint">Selecione os softwares Inova TI contratados ou em negociação por este cliente.</p>
+            <div class="system-checkboxes">
+              {% for sys in system_options %}
+              <label class="system-check">
+                <input type="checkbox" name="contracted_systems" value="{{ sys.slug }}" />
+                <span>
+                  <strong>{{ sys.name }}</strong>
+                  {% if sys.status == 'construction' %}<span class="badge badge-grace">Em construção</span>{% endif %}
+                </span>
+              </label>
+              {% endfor %}
             </div>
 
             <h3 class="section-title">Endereço</h3>
@@ -83,7 +97,7 @@
             <thead>
               <tr>
                 <th>Cliente</th>
-                <th>Produto(s)</th>
+                <th>Sistema(s)</th>
                 <th>Status da licença</th>
                 <th>Pagamento em dia</th>
                 <th></th>

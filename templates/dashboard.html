@@ -36,7 +36,7 @@
 
     <section class="chart-grid">
       <div class="card chart-card">
-        <h2>Licenças por software</h2>
+        <h2>Licenças por sistema</h2>
         <p class="chart-hint">Cada software possui licença independente.</p>
         <canvas id="chartProducts"></canvas>
       </div>
@@ -49,7 +49,7 @@
         <canvas id="chartRevenue"></canvas>
       </div>
       <div class="card chart-card">
-        <h2>Inadimplência por software</h2>
+        <h2>Inadimplência por sistema</h2>
         <canvas id="chartDelinquency"></canvas>
       </div>
       <div class="card chart-card chart-wide">
@@ -64,7 +64,7 @@
         <p class="chart-hint">Carência: {{ stats.block_days }}d · Cancelamento elegível: {{ stats.cancel_days }}d após vencimento do pagamento.</p>
         <table>
           <thead>
-            <tr><th>Cliente</th><th>Software</th><th>Fase</th><th>Dias atraso</th><th></th></tr>
+            <tr><th>Cliente</th><th>Sistema</th><th>Fase</th><th>Dias atraso</th><th></th></tr>
           </thead>
           <tbody>
             {% for row in stats.delinquent_rows %}
@@ -113,7 +113,7 @@
         <h2>Licenças recentes</h2>
         <table>
           <thead>
-            <tr><th>Chave</th><th>Cliente</th><th>Software</th><th>Status</th><th></th></tr>
+            <tr><th>Chave</th><th>Cliente</th><th>Sistema</th><th>Status</th><th></th></tr>
           </thead>
           <tbody>
             {% for row in stats.recent_licenses %}

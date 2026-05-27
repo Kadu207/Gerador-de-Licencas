@@ -14,7 +14,9 @@ LICENSE_KEY_PATTERN = re.compile(rf"^[A-Z0-9]{{{LICENSE_KEY_LEN}}}$")
 PRODUCT_CLOUD = "cloud"
 PRODUCT_LAB = "lab"
 PRODUCT_VDE = "vde"
-ALLOWED_PRODUCTS = {PRODUCT_CLOUD, PRODUCT_LAB, PRODUCT_VDE}
+PRODUCT_LIMPEZA = "limpeza"
+PRODUCT_OUTROS = "outros"
+ALLOWED_PRODUCTS = {PRODUCT_CLOUD, PRODUCT_LAB, PRODUCT_VDE, PRODUCT_LIMPEZA}
 
 PERIOD_TRIAL = "trial"
 PERIOD_1Y = "1y"
@@ -34,9 +36,11 @@ PERIOD_DAYS: dict[str, int] = {
 }
 
 PRODUCT_LABELS = {
-    PRODUCT_CLOUD: "Produto 01",
-    PRODUCT_LAB: "Produto 02",
-    PRODUCT_VDE: "Produto 03",
+    PRODUCT_CLOUD: "Excellence Dental Cloud",
+    PRODUCT_LAB: "Dental Lab",
+    PRODUCT_VDE: "VDE Incorporadora",
+    PRODUCT_LIMPEZA: "Script de Limpeza completo",
+    PRODUCT_OUTROS: "Outros sistemas",
 }
 
 PERIOD_LABELS = {
@@ -71,9 +75,15 @@ STATUS_EXPIRED = "expired"
 API_PRODUCT_ALIASES = {
     "cloud": PRODUCT_CLOUD,
     "erp": PRODUCT_CLOUD,
+    "excellence": PRODUCT_CLOUD,
+    "excellence_cloud": PRODUCT_CLOUD,
     "lab": PRODUCT_LAB,
+    "dental_lab": PRODUCT_LAB,
     "vde": PRODUCT_VDE,
     "vde_incorporadora": PRODUCT_VDE,
+    "limpeza": PRODUCT_LIMPEZA,
+    "cleaning": PRODUCT_LIMPEZA,
+    "script_limpeza": PRODUCT_LIMPEZA,
 }
 
 

@@ -571,3 +571,93 @@ th { background: #faf9f8; font-weight: 600; }
   color: #fca5a5;
   border-left-color: #ef4444;
 }
+
+/* Sistemas — checkboxes cliente + portfólio */
+.system-checkboxes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 10px;
+  margin: 12px 0 20px;
+}
+
+.system-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--ms-border);
+  border-radius: 6px;
+  background: #faf9f8;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.system-check input {
+  width: auto;
+  margin-top: 3px;
+}
+
+.tag-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tag {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #eff6fc;
+  color: var(--ms-blue-dark);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.portfolio-card {
+  margin-bottom: 24px;
+}
+
+.portfolio-card__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.portfolio-card__head h2 {
+  display: inline-block;
+  margin-right: 8px;
+}
+
+.portfolio-edit {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.portfolio-edit .span-2 {
+  grid-column: 1 / -1;
+}
+
+.portfolio-add-plan {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--ms-border);
+}
+
+.portfolio-add-plan summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--ms-blue);
+}
+
+@media (max-width: 768px) {
+  .portfolio-edit {
+    grid-template-columns: 1fr;
+  }
+}

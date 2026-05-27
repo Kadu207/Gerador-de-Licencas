@@ -6,6 +6,7 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 
 from app.config import settings
+from app.catalog import format_product_list, parse_contracted_products, serialize_contracted_products
 from app.licensing import (
     ALLOWED_PAYMENT_PLANS,
     ALLOWED_PERIODS,
@@ -100,6 +101,7 @@ def client_to_dict(client: Client) -> dict:
         "telefone_03": client.telefone_03,
         "clinica_id_erp": client.clinica_id_erp,
         "clinica_id_lab": client.clinica_id_lab,
+        "contracted_products": client.contracted_products or "[]",
         "status": client.status,
         "notes": client.notes,
         "address": {
@@ -128,23 +130,39 @@ def effective_for_license(lic: LicenseRecord) -> dict:
     return eff
 
 
-def summarize_client_licenses(licenses: list[LicenseRecord]) -> dict[str, str]:
+def summarize_client_licenses(
+    licenses: list[LicenseRecord],
+    *,
+    contracted_slugs: list[str] | None = None,
+    labels: dict[str, str] | None = None,
+) -> dict[str, str]:
     """Resumo para listagem de clientes."""
-    if not licenses:
+    label_map = labels or PRODUCT_LABELS
+    products: set[str] = set()
+
+    if contracted_slugs:
+        for slug in contracted_slugs:
+            products.add(label_map.get(slug, slug))
+
+    if not licenses and not products:
         return {"products": "—", "license_status": "Sem licença", "payment_ok": "—"}
 
-    from app.licensing import PRODUCT_LABELS
+    if not licenses:
+        return {
+            "products": format_product_list(list(contracted_slugs or []), label_map),
+            "license_status": "Sem licença emitida",
+            "payment_ok": "—",
+        }
 
-    products: set[str] = set()
     statuses: set[str] = set()
     payment_ok = True
 
     for lic in licenses:
-        products.add(PRODUCT_LABELS.get(lic.produto, lic.produto))
+        products.add(label_map.get(lic.produto, lic.produto))
         eff = effective_for_license(lic)
         if lic.manual_status in ("revoked", "cancelled") or eff.get("licenseExpired"):
             statuses.add("Expirada")
-        elif eff.get("valid"):
+        elif eff.get("validForSoftware"):
             statuses.add("Em vigor")
         else:
             statuses.add("Inativa")
@@ -175,6 +193,7 @@ def create_client(
     clinica_id_erp: int | None = None,
     clinica_id_lab: int | None = None,
     parent_client_id: int | None = None,
+    contracted_products: str = "[]",
     notes: str = "",
     address: dict | None = None,
 ) -> Client:
@@ -192,6 +211,7 @@ def create_client(
         clinica_id_erp=clinica_id_erp,
         clinica_id_lab=clinica_id_lab or clinica_id_erp,
         parent_client_id=parent_client_id,
+        contracted_products=contracted_products or "[]",
         notes=notes.strip(),
     )
     db.add(client)
