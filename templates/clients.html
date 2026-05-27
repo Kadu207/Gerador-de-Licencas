@@ -41,9 +41,9 @@
               </div>
               <div><label>E-mail 01</label><input name="email" type="email" /></div>
               <div><label>E-mail 02</label><input name="email_02" type="email" /></div>
-              <div><label>Telefone 01</label><input name="telefone" data-mask="phone" /></div>
-              <div><label>Telefone 02</label><input name="telefone_02" data-mask="phone" /></div>
-              <div><label>Telefone 03</label><input name="telefone_03" data-mask="phone" /></div>
+              <div><label>Telefone 01</label><input name="telefone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(00) 00000-0000" data-mask="phone" maxlength="16" /></div>
+              <div><label>Telefone 02</label><input name="telefone_02" type="tel" inputmode="tel" autocomplete="tel" placeholder="(00) 00000-0000" data-mask="phone" maxlength="16" /></div>
+              <div><label>Telefone 03</label><input name="telefone_03" type="tel" inputmode="tel" autocomplete="tel" placeholder="(00) 00000-0000" data-mask="phone" maxlength="16" /></div>
               <div>
                 <label>Matriz (filial de)</label>
                 <select name="parent_client_id">
@@ -113,6 +113,6 @@
     </main>
   </div>
   <script src="/static/admin.js"></script>
-  <script src="/static/masks.js"></script>
+  <script src="/static/masks.js?v=2"></script>
 </body>
 </html>

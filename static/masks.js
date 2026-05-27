@@ -6,32 +6,38 @@
 
   function maskCpf(value) {
     const d = digitsOnly(value).slice(0, 11);
-    return d
-      .replace(/(\d{3})(\d)/, "$1.$2")
-      .replace(/(\d{3})(\d)/, "$1.$2")
-      .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+    if (d.length <= 3) return d;
+    if (d.length <= 6) return d.slice(0, 3) + "." + d.slice(3);
+    if (d.length <= 9) return d.slice(0, 3) + "." + d.slice(3, 6) + "." + d.slice(6);
+    return d.slice(0, 3) + "." + d.slice(3, 6) + "." + d.slice(6, 9) + "-" + d.slice(9);
   }
 
   function maskCnpj(value) {
     const d = digitsOnly(value).slice(0, 14);
-    return d
-      .replace(/^(\d{2})(\d)/, "$1.$2")
-      .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
-      .replace(/\.(\d{3})(\d)/, ".$1/$2")
-      .replace(/(\d{4})(\d)/, "$1-$2");
+    if (d.length <= 2) return d;
+    if (d.length <= 5) return d.slice(0, 2) + "." + d.slice(2);
+    if (d.length <= 8) return d.slice(0, 2) + "." + d.slice(2, 5) + "." + d.slice(5);
+    if (d.length <= 12) return d.slice(0, 2) + "." + d.slice(2, 5) + "." + d.slice(5, 8) + "/" + d.slice(8);
+    return d.slice(0, 2) + "." + d.slice(2, 5) + "." + d.slice(5, 8) + "/" + d.slice(8, 12) + "-" + d.slice(12);
   }
 
+  /** Fixo 10 dígitos: (XX) XXXX-XXXX | Celular 11: (XX) XXXXX-XXXX */
   function maskPhone(value) {
     const d = digitsOnly(value).slice(0, 11);
-    if (d.length <= 10) {
-      return d.replace(/(\d{2})(\d{4})(\d{0,4})/, "($1) $2-$3").replace(/[- ]$/, "").trim();
+    const len = d.length;
+    if (len === 0) return "";
+    if (len <= 2) return "(" + d;
+    if (len <= 6) return "(" + d.slice(0, 2) + ") " + d.slice(2);
+    if (len <= 10) {
+      return "(" + d.slice(0, 2) + ") " + d.slice(2, 6) + "-" + d.slice(6);
     }
-    return d.replace(/(\d{2})(\d{5})(\d{0,4})/, "($1) $2-$3").replace(/[- ]$/, "").trim();
+    return "(" + d.slice(0, 2) + ") " + d.slice(2, 7) + "-" + d.slice(7);
   }
 
   function maskCep(value) {
     const d = digitsOnly(value).slice(0, 8);
-    return d.replace(/(\d{5})(\d)/, "$1-$2");
+    if (d.length <= 5) return d;
+    return d.slice(0, 5) + "-" + d.slice(5);
   }
 
   const MASKS = { cpf: maskCpf, cnpj: maskCnpj, phone: maskPhone, cep: maskCep };
@@ -48,19 +54,35 @@
     return formatted.length;
   }
 
+  function applyMask(el, fn) {
+    const raw = el.value;
+    const start = el.selectionStart ?? raw.length;
+    const end = el.selectionEnd ?? start;
+    const digitsBefore = digitsOnly(raw.slice(0, start)).length;
+    const masked = fn(raw);
+    el.value = masked;
+    const next = caretAfterDigits(masked, digitsBefore);
+    try {
+      el.setSelectionRange(next, next);
+    } catch (_) {}
+  }
+
   function bindMask(el, fn) {
     if (!el || el.dataset.maskBound === "1") return;
     el.dataset.maskBound = "1";
+
+    if (el.value) {
+      el.value = fn(el.value);
+    }
+
     el.addEventListener("input", function () {
-      const raw = el.value;
-      const start = el.selectionStart ?? raw.length;
-      const digitsBefore = digitsOnly(raw.slice(0, start)).length;
-      const masked = fn(raw);
-      el.value = masked;
-      const next = caretAfterDigits(masked, digitsBefore);
-      try {
-        el.setSelectionRange(next, next);
-      } catch (_) {}
+      applyMask(el, fn);
+    });
+
+    el.addEventListener("paste", function () {
+      requestAnimationFrame(function () {
+        applyMask(el, fn);
+      });
     });
   }
 
@@ -138,6 +160,15 @@
   }
 
   bindAllMasks(document);
+
+  const clientModal = document.getElementById("client-modal");
+  if (clientModal) {
+    clientModal.addEventListener("close", function () {
+      clientModal.querySelectorAll("input[data-mask]").forEach(function (el) {
+        el.value = "";
+      });
+    });
+  }
 
   const cepInput = document.getElementById("cep");
   if (cepInput) {
