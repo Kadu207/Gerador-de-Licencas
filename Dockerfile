@@ -18,6 +18,7 @@ COPY templates ./templates
 COPY static ./static
 COPY alembic ./alembic
 COPY alembic.ini .
+COPY tools ./tools
 COPY docker/entrypoint.sh /entrypoint.sh
 RUN sed -i 's/\r$//' /entrypoint.sh && chmod +x /entrypoint.sh && mkdir -p /app/data
 
