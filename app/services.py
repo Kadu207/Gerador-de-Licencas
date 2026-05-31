@@ -6,11 +6,10 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 
 from app.config import settings
-from app.catalog import format_product_list, parse_contracted_products, serialize_contracted_products
+from app.catalog import format_product_list, is_licensable_product, parse_contracted_products, serialize_contracted_products
 from app.licensing import (
     ALLOWED_PAYMENT_PLANS,
     ALLOWED_PERIODS,
-    ALLOWED_PRODUCTS,
     PERIOD_LABELS,
     PRODUCT_LABELS,
     STATUS_ACTIVE,
@@ -334,7 +333,7 @@ def issue_license(
     payment_plan: str = "annual",
     notes: str = "",
 ) -> LicenseRecord:
-    if produto not in ALLOWED_PRODUCTS:
+    if not is_licensable_product(db, produto):
         raise ValueError("INVALID_PRODUCT")
     if periodo not in ALLOWED_PERIODS:
         raise ValueError("INVALID_PERIOD")

@@ -23,6 +23,7 @@ from app.dashboard_stats import build_dashboard_stats
 from app.catalog import (
     BILLING_LABELS,
     STATUS_LABELS as CATALOG_STATUS_LABELS,
+    create_software_product,
     licensable_products,
     parse_contracted_products,
     product_labels_dict,
@@ -687,12 +688,41 @@ def systems_portfolio(request: Request, db: Session = Depends(get_db), user: Ope
     )
 
 
+@app.post("/systems/products")
+def systems_create_product(
+    slug: str = Form(...),
+    name: str = Form(...),
+    description: str = Form(""),
+    status: str = Form("active"),
+    license_enabled: str = Form("1"),
+    db: Session = Depends(get_db),
+    user: Operator = Depends(get_current_user),
+):
+    try:
+        create_software_product(
+            db,
+            slug=slug,
+            name=name,
+            description=description,
+            status=status,
+            license_enabled=license_enabled == "1",
+        )
+    except ValueError as exc:
+        code = str(exc)
+        if code == "SLUG_DUPLICADO":
+            raise HTTPException(422, "Já existe um sistema com este identificador (slug).") from exc
+        raise HTTPException(422, "Identificador inválido. Use letras minúsculas, números e _ (ex: meu_sistema).") from exc
+    log_action(db, user.username, "system_create", f"Catálogo {slug}")
+    return RedirectResponse("/systems?saved=1", status_code=303)
+
+
 @app.post("/systems/products/{product_id}/update")
 def systems_update_product(
     product_id: int,
     name: str = Form(...),
     description: str = Form(""),
     status: str = Form("active"),
+    license_enabled: str = Form("1"),
     db: Session = Depends(get_db),
     user: Operator = Depends(get_current_user),
 ):
@@ -701,6 +731,7 @@ def systems_update_product(
         raise HTTPException(404, "Sistema não encontrado")
     product.name = name.strip()
     product.description = description.strip()
+    product.license_enabled = license_enabled == "1"
     if status in CATALOG_STATUS_LABELS:
         product.status = status
     db.commit()

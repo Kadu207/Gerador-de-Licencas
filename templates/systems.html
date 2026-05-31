@@ -20,6 +20,43 @@
       <div class="alert alert-info">Alterações salvas com sucesso.</div>
       {% endif %}
 
+      <article class="card portfolio-card portfolio-card--new">
+        <h2>Novo sistema / projeto</h2>
+        <p class="field-hint">Cadastre softwares adicionais — aparecem na landing, no cadastro de clientes e no Stripe (se emite licença).</p>
+        <form method="post" action="/systems/products" class="portfolio-edit">
+          <div>
+            <label>Identificador (slug)</label>
+            <input name="slug" required placeholder="ex: meu_sistema" pattern="[a-z][a-z0-9_]{1,31}" title="Letras minúsculas, números e underscore" />
+          </div>
+          <div>
+            <label>Nome comercial</label>
+            <input name="name" required placeholder="Ex: Meu Novo Sistema" />
+          </div>
+          <div class="span-2">
+            <label>Descrição</label>
+            <textarea name="description" rows="2" placeholder="Resumo para a landing pública"></textarea>
+          </div>
+          <div>
+            <label>Status</label>
+            <select name="status">
+              {% for key, label in status_labels.items() %}
+              <option value="{{ key }}">{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label>Emite licença?</label>
+            <select name="license_enabled">
+              <option value="1">Sim</option>
+              <option value="0">Não (apenas portfólio)</option>
+            </select>
+          </div>
+          <div class="actions span-2">
+            <button type="submit" class="btn btn-primary btn-sm">Adicionar sistema</button>
+          </div>
+        </form>
+      </article>
+
       {% for product in products %}
       <article class="card portfolio-card" id="system-{{ product.slug }}">
         <div class="portfolio-card__head">
@@ -50,6 +87,13 @@
               {% for key, label in status_labels.items() %}
               <option value="{{ key }}"{% if product.status == key %} selected{% endif %}>{{ label }}</option>
               {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label>Emite licença?</label>
+            <select name="license_enabled">
+              <option value="1"{% if product.license_enabled %} selected{% endif %}>Sim</option>
+              <option value="0"{% if not product.license_enabled %} selected{% endif %}>Não</option>
             </select>
           </div>
           <div class="actions">

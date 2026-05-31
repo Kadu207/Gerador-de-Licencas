@@ -2,6 +2,7 @@
 """Aplica migrations Alembic; faz stamp 001 em bancos criados antes do Alembic."""
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -25,6 +26,7 @@ def _detect_revision(insp) -> str | None:
 
 def main() -> int:
     url = resolve_database_url()
+    os.environ["LOCAL_DATABASE_URL"] = url
     engine = create_engine(url)
     insp = inspect(engine)
 

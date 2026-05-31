@@ -17,7 +17,7 @@ def _build_postgres_url() -> str | None:
 
 
 def resolve_database_url(configured: str = "") -> str:
-    """Prioridade: Postgres explícito → SQLite explícito → POSTGRES_* → fallback."""
+    """Prioridade: Postgres explícito → POSTGRES_* (Docker) → SQLite → fallback."""
     env_url = os.environ.get("LOCAL_DATABASE_URL", "").strip()
     cfg = (configured or "").strip()
 
@@ -26,14 +26,15 @@ def resolve_database_url(configured: str = "") -> str:
     if cfg.startswith("postgresql"):
         return cfg
 
+    # VPS/Docker: POSTGRES_* vence sqlite acidental no .env
+    built = _build_postgres_url()
+    if built:
+        return built
+
     if env_url.startswith("sqlite"):
         return env_url
     if cfg.startswith("sqlite"):
         return cfg
-
-    built = _build_postgres_url()
-    if built:
-        return built
 
     if env_url:
         return env_url

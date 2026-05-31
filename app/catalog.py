@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 
 from decimal import Decimal
 
@@ -170,6 +171,61 @@ def selectable_products(db: Session) -> list[SoftwareProduct]:
 
 def selectable_product_slugs(db: Session) -> set[str]:
     return {p.slug for p in selectable_products(db)}
+
+
+def normalize_product_slug(raw: str) -> str:
+    s = raw.strip().lower().replace("-", "_").replace(" ", "_")
+    s = re.sub(r"[^a-z0-9_]", "", s)
+    return s[:32]
+
+
+def is_valid_product_slug(slug: str) -> bool:
+    return bool(slug) and bool(re.match(r"^[a-z][a-z0-9_]{1,31}$", slug))
+
+
+def is_licensable_product(db: Session, slug: str) -> bool:
+    return (
+        db.query(SoftwareProduct)
+        .filter(
+            SoftwareProduct.slug == slug,
+            SoftwareProduct.license_enabled.is_(True),
+        )
+        .first()
+        is not None
+    )
+
+
+def create_software_product(
+    db: Session,
+    *,
+    slug: str,
+    name: str,
+    description: str = "",
+    status: str = STATUS_ACTIVE,
+    license_enabled: bool = True,
+) -> SoftwareProduct:
+    clean_slug = normalize_product_slug(slug)
+    if not is_valid_product_slug(clean_slug):
+        raise ValueError("SLUG_INVALIDO")
+    if db.query(SoftwareProduct).filter(SoftwareProduct.slug == clean_slug).first():
+        raise ValueError("SLUG_DUPLICADO")
+
+    max_order = db.query(SoftwareProduct.sort_order).order_by(SoftwareProduct.sort_order.desc()).first()
+    sort_order = (max_order[0] if max_order and max_order[0] else 0) + 10
+
+    product = SoftwareProduct(
+        slug=clean_slug,
+        name=name.strip(),
+        description=description.strip(),
+        status=status if status in STATUS_LABELS else STATUS_ACTIVE,
+        sort_order=sort_order,
+        license_enabled=license_enabled,
+    )
+    db.add(product)
+    db.commit()
+    db.refresh(product)
+    PRODUCT_LABELS[clean_slug] = product.name
+    return product
 
 
 def format_product_list(slugs: list[str], labels: dict[str, str]) -> str:
