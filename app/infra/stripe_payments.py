@@ -5,10 +5,15 @@ import logging
 from decimal import Decimal
 
 from app.config import settings
-from app.licensing import PAYMENT_PLAN_ANNUAL, PAYMENT_PLAN_MONTHLY, PAYMENT_PLAN_SEMIANNUAL
+from app.licensing import (
+    PAYMENT_PLAN_ANNUAL,
+    PAYMENT_PLAN_MONTHLY,
+    PAYMENT_PLAN_SEMIANNUAL,
+)
 
 logger = logging.getLogger("license-stripe")
 
+# Fallback legado (se plano não existir no catálogo)
 PLAN_AMOUNTS: dict[str, Decimal] = {
     PAYMENT_PLAN_MONTHLY: Decimal("299.00"),
     PAYMENT_PLAN_SEMIANNUAL: Decimal("1599.00"),
@@ -37,9 +42,11 @@ def create_checkout_session(
     customer_email: str,
     success_url: str,
     cancel_url: str,
+    amount: Decimal,
+    product_name: str,
+    plan_label: str,
 ) -> dict:
     stripe = _get_stripe()
-    amount = PLAN_AMOUNTS.get(payment_plan, PLAN_AMOUNTS[PAYMENT_PLAN_ANNUAL])
     amount_cents = int(amount * 100)
 
     session = stripe.checkout.Session.create(
@@ -51,7 +58,7 @@ def create_checkout_session(
                     "currency": settings.stripe_currency,
                     "unit_amount": amount_cents,
                     "product_data": {
-                        "name": f"Licença InovatiTech — plano {payment_plan}",
+                        "name": f"{product_name} — {plan_label}",
                     },
                 },
                 "quantity": 1,
@@ -65,7 +72,7 @@ def create_checkout_session(
             "payment_plan": payment_plan,
         },
     )
-    return {"session_id": session.id, "url": session.url}
+    return {"session_id": session.id, "url": session.url, "amount": amount}
 
 
 def construct_webhook_event(payload: bytes, sig_header: str):

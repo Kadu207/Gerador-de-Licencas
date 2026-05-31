@@ -12,7 +12,7 @@
       <div class="page-header">
         <div>
           <h1>Portfólio de sistemas</h1>
-          <p class="subtitle">Catálogo de softwares Inova TI — descrições, planos e valores comerciais.</p>
+          <p class="subtitle">Catálogo de softwares Inova TI — descrições, planos e valores comerciais (site público e Stripe).</p>
         </div>
       </div>
 
@@ -58,6 +58,7 @@
         </form>
 
         <h3 class="section-title">Planos e custos</h3>
+        <p class="field-hint">Valores exibidos na landing pública e usados no Checkout Stripe (Mensal / Semestral / Anual).</p>
         {% if product.plans %}
         <div class="plan-list">
           {% for plan in product.plans %}

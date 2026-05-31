@@ -19,6 +19,10 @@
     <div class="alert alert-info">Dados do cliente atualizados com sucesso.</div>
     {% elif saved == 'contracted' %}
     <div class="alert alert-info">Sistemas contratados atualizados com sucesso.</div>
+    {% elif payment_flash == 'success' %}
+    <div class="alert alert-info">Pagamento recebido pelo Stripe. A licença será atualizada em instantes.</div>
+    {% elif payment_flash == 'cancelled' %}
+    <div class="alert alert-info">Pagamento cancelado pelo cliente.</div>
     {% endif %}
 
     <div class="card">
@@ -178,9 +182,10 @@
                 {% endif %}
                 {% if stripe_enabled and lic.manual_status != 'revoked' %}
                 <form method="post" action="/licenses/{{ lic.id }}/payment-link">
-                  <select name="payment_plan" style="width:auto;margin-bottom:4px">
+                  <select name="payment_plan" style="width:auto;margin-bottom:4px;min-width:180px">
                     {% for key, label in payment_plans.items() %}
-                    <option value="{{ key }}">{{ label }}</option>
+                    {% set price = stripe_prices.get(lic.produto, {}).get(key) %}
+                    <option value="{{ key }}">{{ label }}{% if price %} — R$ {{ '%.2f'|format(price)|replace('.', ',') }}{% endif %}</option>
                     {% endfor %}
                   </select>
                   <button class="btn btn-secondary" type="submit">Link Stripe</button>

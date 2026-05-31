@@ -16,7 +16,7 @@ from app.api_v1 import router as api_v1_router
 from app.auth import create_access_token, decode_token, hash_password, verify_password
 from app.config import settings
 from app.infra.receita import fetch_cnpj_receita, validate_document
-from app.infra.stripe_payments import create_checkout_session, stripe_enabled
+from app.infra.stripe_payments import PLAN_AMOUNTS, create_checkout_session, stripe_enabled
 from app.infra.viacep import fetch_address_by_cep
 from app.jobs.alerts import run_license_alerts
 from app.dashboard_stats import build_dashboard_stats
@@ -26,13 +26,15 @@ from app.catalog import (
     licensable_products,
     parse_contracted_products,
     product_labels_dict,
+    resolve_catalog_plan,
     seed_software_catalog,
     selectable_product_slugs,
     selectable_products,
     serialize_contracted_products,
+    stripe_price_map,
     sync_product_labels_from_catalog,
 )
-from app.licensing import PAYMENT_PLAN_LABELS, PERIOD_LABELS, PRODUCT_LABELS, STATUS_CANCELLED
+from app.licensing import PAYMENT_PLAN_ANNUAL, PAYMENT_PLAN_LABELS, PERIOD_LABELS, PRODUCT_LABELS, STATUS_CANCELLED
 from app.models import Client, LicenseRecord, Notification, Operator, Payment, SessionLocal, SoftwarePlan, SoftwareProduct, init_db
 from app.services import (
     cancel_client,
@@ -206,6 +208,7 @@ def public_landing(request: Request, db: Session = Depends(get_db), user=Depends
             "public_url": settings.public_base_url,
             "catalog": catalog,
             "status_labels": CATALOG_STATUS_LABELS,
+            "billing_labels": BILLING_LABELS,
         },
     )
 
@@ -432,7 +435,9 @@ def client_detail(
             "block_days": settings.block_after_days,
             "cancel_days": settings.cancel_after_days,
             "stripe_enabled": stripe_enabled(),
+            "stripe_prices": stripe_price_map(db),
             "saved": request.query_params.get("saved"),
+            "payment_flash": request.query_params.get("payment"),
         },
     )
 
@@ -604,6 +609,15 @@ def license_payment_link(
     if not client:
         raise HTTPException(404)
 
+    resolved = resolve_catalog_plan(db, lic.produto, payment_plan)
+    if resolved:
+        amount, product_name, plan_label = resolved
+    else:
+        labels = product_labels_dict(db)
+        amount = PLAN_AMOUNTS.get(payment_plan, PLAN_AMOUNTS[PAYMENT_PLAN_ANNUAL])
+        product_name = labels.get(lic.produto, lic.produto)
+        plan_label = PAYMENT_PLAN_LABELS.get(payment_plan, payment_plan)
+
     base = settings.public_base_url or f"http://127.0.0.1:{settings.license_server_port}"
     session = create_checkout_session(
         client_id=client.id,
@@ -612,6 +626,9 @@ def license_payment_link(
         customer_email=client.email,
         success_url=f"{base}/clients/{client.id}?payment=success",
         cancel_url=f"{base}/clients/{client.id}?payment=cancelled",
+        amount=amount,
+        product_name=product_name,
+        plan_label=plan_label,
     )
 
     db.add(
@@ -620,6 +637,7 @@ def license_payment_link(
             license_id=lic.id,
             stripe_session_id=session["session_id"],
             payment_plan=payment_plan,
+            amount=session.get("amount", amount),
             status="pending",
         )
     )

@@ -55,8 +55,9 @@
             {% for plan in product.plans if plan.active %}
             <li>
               <strong>{{ plan.name }}</strong>
+              <span class="muted-sm">({{ billing_labels.get(plan.billing_period, plan.billing_period) }})</span>
               {% if plan.price and plan.price > 0 %}
-              — R$ {{ '%.2f'|format(plan.price) }}
+              — R$ {{ '%.2f'|format(plan.price)|replace('.', ',') }}
               {% elif plan.description %}
               — {{ plan.description }}
               {% endif %}

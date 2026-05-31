@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import json
 
+from decimal import Decimal
+
 from sqlalchemy.orm import Session
 
 from app.licensing import (
@@ -12,6 +14,9 @@ from app.licensing import (
     PRODUCT_OUTROS,
     PRODUCT_VDE,
     PRODUCT_LABELS,
+    PAYMENT_PLAN_ANNUAL,
+    PAYMENT_PLAN_MONTHLY,
+    PAYMENT_PLAN_SEMIANNUAL,
 )
 from app.models import SoftwarePlan, SoftwareProduct
 
@@ -34,6 +39,13 @@ BILLING_LABELS = {
     "custom": "Sob consulta",
 }
 
+# payment_plan (licença/Stripe) → billing_period (catálogo)
+PAYMENT_PLAN_TO_BILLING: dict[str, str] = {
+    PAYMENT_PLAN_MONTHLY: "monthly",
+    PAYMENT_PLAN_SEMIANNUAL: "semiannual",
+    PAYMENT_PLAN_ANNUAL: "annual",
+}
+
 DEFAULT_CATALOG: list[dict] = [
     {
         "slug": PRODUCT_CLOUD,
@@ -47,6 +59,7 @@ DEFAULT_CATALOG: list[dict] = [
         "license_enabled": True,
         "plans": [
             {"name": "Plano Mensal", "billing_period": "monthly", "price": 497.00, "description": "Por clínica / mês"},
+            {"name": "Plano Semestral", "billing_period": "semiannual", "price": 2486.00, "description": "Economia de 1 mês"},
             {"name": "Plano Anual", "billing_period": "annual", "price": 4970.00, "description": "Economia de 2 meses"},
             {"name": "Plano Trienal", "billing_period": "triennial", "price": 0, "description": "Condições especiais — consulte comercial"},
         ],
@@ -62,8 +75,9 @@ DEFAULT_CATALOG: list[dict] = [
         "sort_order": 20,
         "license_enabled": True,
         "plans": [
-            {"name": "Plano Mensal", "billing_period": "monthly", "price": 397.00, "description": "Por laboratório / mês"},
-            {"name": "Plano Anual", "billing_period": "annual", "price": 3970.00, "description": "Economia de 2 meses"},
+            {"name": "Plano Mensal", "billing_period": "monthly", "price": 299.00, "description": "Por laboratório / mês"},
+            {"name": "Plano Semestral", "billing_period": "semiannual", "price": 1599.00, "description": "Economia de 2 meses"},
+            {"name": "Plano Anual", "billing_period": "annual", "price": 2999.00, "description": "Economia de 2 meses"},
         ],
     },
     {
@@ -162,6 +176,56 @@ def format_product_list(slugs: list[str], labels: dict[str, str]) -> str:
     if not slugs:
         return "—"
     return ", ".join(labels.get(s, s) for s in slugs)
+
+
+def resolve_catalog_plan(
+    db: Session,
+    product_slug: str,
+    payment_plan: str,
+) -> tuple[Decimal, str, str] | None:
+    """Retorna (valor, nome produto, rótulo plano) para Checkout Stripe."""
+    billing = PAYMENT_PLAN_TO_BILLING.get(payment_plan)
+    if not billing:
+        return None
+    product = db.query(SoftwareProduct).filter(SoftwareProduct.slug == product_slug).first()
+    if not product:
+        return None
+    plan = (
+        db.query(SoftwarePlan)
+        .filter(
+            SoftwarePlan.product_id == product.id,
+            SoftwarePlan.billing_period == billing,
+            SoftwarePlan.active.is_(True),
+        )
+        .order_by(SoftwarePlan.sort_order)
+        .first()
+    )
+    if not plan or plan.price is None or plan.price <= 0:
+        return None
+    label = BILLING_LABELS.get(billing, billing)
+    return Decimal(str(plan.price)), product.name, f"{plan.name} ({label})"
+
+
+def stripe_price_map(db: Session) -> dict[str, dict[str, float]]:
+    """Mapa produto → payment_plan → preço (UI admin / Stripe)."""
+    out: dict[str, dict[str, float]] = {}
+    for product in db.query(SoftwareProduct).all():
+        prices: dict[str, float] = {}
+        for pay_plan, billing in PAYMENT_PLAN_TO_BILLING.items():
+            plan = (
+                db.query(SoftwarePlan)
+                .filter(
+                    SoftwarePlan.product_id == product.id,
+                    SoftwarePlan.billing_period == billing,
+                    SoftwarePlan.active.is_(True),
+                )
+                .first()
+            )
+            if plan and plan.price and plan.price > 0:
+                prices[pay_plan] = float(plan.price)
+        if prices:
+            out[product.slug] = prices
+    return out
 
 
 def seed_software_catalog(db: Session) -> None:
