@@ -5,6 +5,7 @@
   <title>Gerador de Licenças — Inova TI</title>
 </head>
 <body>
+  {% from "_pricing_table.html" import pricing_table %}
   {% include "public/_header.html" %}
 
   <section class="hero-split" role="banner">
@@ -26,8 +27,8 @@
           cada cliente com chaves independentes de 25 caracteres.
         </p>
         <div class="hero-split__actions">
-          <a href="/app/login" class="btn btn--primary">Acessar painel</a>
-          <a href="/suporte" class="btn btn--secondary">Central de suporte</a>
+          <a href="#sistemas" class="btn btn--primary">Sistemas e preços</a>
+          <a href="/app/login" class="btn btn--secondary">Acessar painel</a>
         </div>
       </div>
     </div>
@@ -37,8 +38,8 @@
   <section class="catalog" id="sistemas" aria-labelledby="catalog-title">
     <div class="site-container">
       <header class="catalog__header">
-        <h2 id="catalog-title">Sistemas Inova TI</h2>
-        <p>Soluções desenvolvidas e licenciadas centralmente — cada produto com chave independente.</p>
+        <h2 id="catalog-title">Sistemas e preços Inova TI</h2>
+        <p>Licenciamento por produto — valores de referência para contratação. Pagamento via Stripe (cartão, PIX e boleto).</p>
       </header>
       <div class="catalog__grid">
         {% for product in catalog %}
@@ -50,20 +51,9 @@
             </span>
           </div>
           <p class="catalog-card__desc">{{ product.description }}</p>
-          {% if product.plans %}
-          <ul class="catalog-card__plans">
-            {% for plan in product.plans if plan.active %}
-            <li>
-              <strong>{{ plan.name }}</strong>
-              <span class="muted-sm">({{ billing_labels.get(plan.billing_period, plan.billing_period) }})</span>
-              {% if plan.price and plan.price > 0 %}
-              — R$ {{ '%.2f'|format(plan.price)|replace('.', ',') }}
-              {% elif plan.description %}
-              — {{ plan.description }}
-              {% endif %}
-            </li>
-            {% endfor %}
-          </ul>
+          {{ pricing_table(product, billing_labels) }}
+          {% if product.slug in ['cloud', 'lab'] %}
+          <p class="catalog-card__note">Valores editáveis pelo administrador no painel interno.</p>
           {% endif %}
         </article>
         {% endfor %}

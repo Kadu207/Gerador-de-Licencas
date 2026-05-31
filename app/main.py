@@ -23,6 +23,7 @@ from app.dashboard_stats import build_dashboard_stats
 from app.catalog import (
     BILLING_LABELS,
     STATUS_LABELS as CATALOG_STATUS_LABELS,
+    apply_commercial_plan_prices,
     create_software_product,
     licensable_products,
     parse_contracted_products,
@@ -55,6 +56,18 @@ from app.sync import ensure_remote_tables, test_connections
 ROOT = Path(__file__).resolve().parents[1]
 templates = Jinja2Templates(directory=str(ROOT / "templates"))
 templates.env.filters["tojson"] = json.dumps
+
+
+def _format_brl(value) -> str:
+    try:
+        amount = float(value)
+        formatted = f"{amount:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        return f"R$ {formatted}"
+    except (TypeError, ValueError):
+        return "—"
+
+
+templates.env.filters["brl"] = _format_brl
 
 app = FastAPI(
     title="Gerador de Licenças — Inova TI",
@@ -151,6 +164,7 @@ def startup() -> None:
     db = SessionLocal()
     try:
         seed_software_catalog(db)
+        apply_commercial_plan_prices(db)
         sync_product_labels_from_catalog(db)
         if not db.query(Operator).first():
             db.add(
@@ -686,6 +700,16 @@ def systems_portfolio(request: Request, db: Session = Depends(get_db), user: Ope
             "saved": request.query_params.get("saved"),
         },
     )
+
+
+@app.post("/systems/apply-default-prices")
+def systems_apply_default_prices(
+    db: Session = Depends(get_db),
+    user: Operator = Depends(get_current_user),
+):
+    n = apply_commercial_plan_prices(db)
+    log_action(db, user.username, "system_prices_sync", f"{n} planos comerciais aplicados")
+    return RedirectResponse("/systems?saved=prices", status_code=303)
 
 
 @app.post("/systems/products")

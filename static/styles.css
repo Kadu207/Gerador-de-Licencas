@@ -669,6 +669,53 @@ th { background: #faf9f8; font-weight: 600; }
   margin-top: 8px;
 }
 
+.pricing-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  margin: 12px 0;
+}
+
+.pricing-table th,
+.pricing-table td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid #edebe9;
+}
+
+.pricing-table th {
+  font-weight: 600;
+  color: #323130;
+  background: #faf9f8;
+}
+
+.pricing-table__amount {
+  text-align: right;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.pricing-table--compact {
+  font-size: 13px;
+}
+
+.pricing-preview {
+  background: #faf9f8;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+}
+
+.pricing-process-hint {
+  margin-bottom: 1.25rem;
+}
+
+.process-steps {
+  margin: 8px 0 0 1.25rem;
+  line-height: 1.7;
+  color: #605e5c;
+}
+
 @media (max-width: 768px) {
   .portfolio-edit {
     grid-template-columns: 1fr;

@@ -5,6 +5,7 @@
   <title>Portfólio de sistemas — Gerador de Licenças Inova TI</title>
 </head>
 <body class="admin-app">
+  {% from "_pricing_table.html" import pricing_table %}
   {% include "_sidebar.html" %}
   <div class="admin-main">
     {% include "_admin_topbar.html" %}
@@ -12,13 +13,27 @@
       <div class="page-header">
         <div>
           <h1>Portfólio de sistemas</h1>
-          <p class="subtitle">Catálogo de softwares Inova TI — descrições, planos e valores comerciais (site público e Stripe).</p>
+          <p class="subtitle">Cadastro comercial, preços da landing pública e valores cobrados no Stripe.</p>
         </div>
+        <form method="post" action="/systems/apply-default-prices" onsubmit="return confirm('Aplicar tabela comercial padrão (Cloud e Lab)?')">
+          <button type="submit" class="btn btn-secondary btn-sm">Restaurar preços Cloud / Lab</button>
+        </form>
       </div>
 
-      {% if saved %}
+      {% if saved == 'prices' %}
+      <div class="alert alert-info">Tabela comercial Cloud e Dental Lab aplicada com sucesso.</div>
+      {% elif saved %}
       <div class="alert alert-info">Alterações salvas com sucesso.</div>
       {% endif %}
+
+      <div class="card pricing-process-hint">
+        <h2>Onde estes valores aparecem</h2>
+        <ol class="process-steps">
+          <li><strong>Portfólio</strong> (esta página) — edite planos e custos abaixo</li>
+          <li><strong>Site público</strong> — seção <a href="/#sistemas" target="_blank" rel="noopener">Sistemas e preços</a></li>
+          <li><strong>Cliente → Link Stripe</strong> — Checkout com valor do sistema da licença</li>
+        </ol>
+      </div>
 
       <article class="card portfolio-card portfolio-card--new">
         <h2>Novo sistema / projeto</h2>
@@ -72,6 +87,14 @@
           <code class="muted-sm">{{ product.slug }}</code>
         </div>
 
+        <div class="pricing-preview">
+          <h3 class="section-title">Tabela comercial (site + Stripe)</h3>
+          {{ pricing_table(product, billing_labels) }}
+          {% if not product.plans %}
+          <p class="field-hint">Nenhum plano com valor — adicione abaixo ou use «Restaurar preços Cloud / Lab» para os produtos principais.</p>
+          {% endif %}
+        </div>
+
         <form method="post" action="/systems/products/{{ product.id }}/update" class="portfolio-edit">
           <div class="span-2">
             <label>Nome comercial</label>
@@ -101,8 +124,8 @@
           </div>
         </form>
 
-        <h3 class="section-title">Planos e custos</h3>
-        <p class="field-hint">Valores exibidos na landing pública e usados no Checkout Stripe (Mensal / Semestral / Anual).</p>
+        <h3 class="section-title">Editar planos e custos</h3>
+        <p class="field-hint">Periodicidade <code>monthly</code>, <code>semiannual</code> e <code>annual</code> alimentam o Stripe.</p>
         {% if product.plans %}
         <div class="plan-list">
           {% for plan in product.plans %}

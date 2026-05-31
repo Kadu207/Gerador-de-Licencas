@@ -1,0 +1,27 @@
+{# Tabela de preços comerciais — landing, portfólio e cliente #}
+{% macro pricing_table(product, billing_labels, compact=false) %}
+{% set rows = namespace(items=[]) %}
+{% for plan in product.plans if plan.active and plan.billing_period in ['monthly', 'semiannual', 'annual'] and plan.price and plan.price > 0 %}
+  {% set _ = rows.items.append(plan) %}
+{% endfor %}
+{% if rows.items %}
+<table class="pricing-table{% if compact %} pricing-table--compact{% endif %}">
+  <thead>
+    <tr>
+      <th>Plano</th>
+      <th>Periodicidade</th>
+      <th class="pricing-table__amount">Valor</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for plan in rows.items %}
+    <tr>
+      <td>{{ plan.name }}</td>
+      <td>{{ billing_labels.get(plan.billing_period, plan.billing_period) }}</td>
+      <td class="pricing-table__amount">{{ plan.price | brl }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% endmacro %}

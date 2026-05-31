@@ -228,6 +228,73 @@ def create_software_product(
     return product
 
 
+STRIPE_BILLING_PERIODS = frozenset({"monthly", "semiannual", "annual"})
+
+COMMERCIAL_PLAN_DEFAULTS: dict[str, list[tuple]] = {
+    PRODUCT_CLOUD: [
+        ("monthly", "Plano Mensal", 497.00, "Por clínica / mês", 10),
+        ("semiannual", "Plano Semestral", 2486.00, "Economia de 1 mês", 15),
+        ("annual", "Plano Anual", 4970.00, "Economia de 2 meses", 20),
+    ],
+    PRODUCT_LAB: [
+        ("monthly", "Plano Mensal", 299.00, "Por laboratório / mês", 10),
+        ("semiannual", "Plano Semestral", 1599.00, "Economia de 2 meses", 15),
+        ("annual", "Plano Anual", 2999.00, "Economia de 2 meses", 20),
+    ],
+}
+
+
+def commercial_plans_for_product(product: SoftwareProduct) -> list[SoftwarePlan]:
+    return [
+        p
+        for p in product.plans
+        if p.active and p.billing_period in STRIPE_BILLING_PERIODS and p.price and p.price > 0
+    ]
+
+
+def apply_commercial_plan_prices(db: Session, slugs: list[str] | None = None) -> int:
+    """Aplica tabela comercial Cloud/Lab (ou slugs informados). Retorna planos atualizados."""
+    targets = slugs or list(COMMERCIAL_PLAN_DEFAULTS.keys())
+    updated = 0
+    for slug in targets:
+        plans_def = COMMERCIAL_PLAN_DEFAULTS.get(slug)
+        if not plans_def:
+            continue
+        product = db.query(SoftwareProduct).filter(SoftwareProduct.slug == slug).first()
+        if not product:
+            continue
+        for billing, name, price, description, sort_order in plans_def:
+            row = (
+                db.query(SoftwarePlan)
+                .filter(
+                    SoftwarePlan.product_id == product.id,
+                    SoftwarePlan.billing_period == billing,
+                )
+                .first()
+            )
+            if row:
+                row.name = name
+                row.price = price
+                row.description = description
+                row.sort_order = sort_order
+                row.active = True
+            else:
+                db.add(
+                    SoftwarePlan(
+                        product_id=product.id,
+                        name=name,
+                        billing_period=billing,
+                        price=price,
+                        description=description,
+                        sort_order=sort_order,
+                        active=True,
+                    )
+                )
+            updated += 1
+    db.commit()
+    return updated
+
+
 def format_product_list(slugs: list[str], labels: dict[str, str]) -> str:
     if not slugs:
         return "—"

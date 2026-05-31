@@ -104,6 +104,7 @@
 
     <div class="card">
       <h2>Emitir nova licença</h2>
+      <p class="field-hint">Período técnico da chave (trial, 1–5 anos). Valores comerciais Stripe estão na tabela abaixo e no <a href="/systems">Portfólio</a>.</p>
       <form method="post" action="/clients/{{ client.id }}/licenses">
         <div class="grid-3">
           <div>
@@ -135,6 +136,33 @@
         <div class="actions"><button class="btn btn-primary" type="submit">Gerar licença (25 caracteres)</button></div>
       </form>
     </div>
+
+    {% if stripe_enabled %}
+    <div class="card">
+      <h2>Cobrança Stripe — tabela do sistema</h2>
+      <p class="field-hint">Valores usados ao gerar <strong>Link Stripe</strong> em cada licença (conforme sistema e plano de pagamento).</p>
+      {% for sys in licensable_systems %}
+      {% if stripe_prices.get(sys.slug) %}
+      <div class="pricing-preview" style="margin-bottom:16px">
+        <h3 class="section-title">{{ sys.name }}</h3>
+        <table class="pricing-table pricing-table--compact">
+          <thead><tr><th>Plano pagamento</th><th class="pricing-table__amount">Valor Checkout</th></tr></thead>
+          <tbody>
+            {% for key, label in payment_plans.items() %}
+            {% if stripe_prices.get(sys.slug, {}).get(key) %}
+            <tr>
+              <td>{{ label }}</td>
+              <td class="pricing-table__amount">{{ stripe_prices[sys.slug][key] | brl }}</td>
+            </tr>
+            {% endif %}
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
+      {% endfor %}
+    </div>
+    {% endif %}
 
     <div class="card">
       <h2>Licenças do cliente</h2>
