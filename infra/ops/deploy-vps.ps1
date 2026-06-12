@@ -42,7 +42,7 @@ if (-not $SkipPush) {
   git push -u origin $Branch
 }
 
-Log "SSH deploy em $SshTarget:$RemoteDir"
+Log "SSH deploy em ${SshTarget}:${RemoteDir}"
 $remoteCmd = @"
 set -euo pipefail
 cd '$RemoteDir'
