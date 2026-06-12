@@ -36,7 +36,7 @@ echo "==> Build e subida (license-db + license-web na porta ${LICENSE_WEB_PORT})
 docker compose up -d license-db license-web --build
 
 echo "==> Prisma schema (idempotente)"
-docker compose run --rm license-web npx prisma db push
+docker compose exec -T license-web npx prisma db push
 
 echo "==> Health local"
 for i in $(seq 1 30); do
