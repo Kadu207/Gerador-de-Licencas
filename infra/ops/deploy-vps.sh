@@ -21,8 +21,9 @@ fi
 
 bash "$APP_DIR/infra/ops/provision-web-env.sh"
 
-# Porta 8195 no host (nginx Excellence aponta para host:8195; 3000 e usado pelo agenda-app)
+# Porta 8195 no host (nginx Excellence usa host.docker.internal:8195)
 export LICENSE_WEB_PORT="${LICENSE_WEB_PORT:-8195}"
+export LICENSE_WEB_BIND="${LICENSE_WEB_BIND:-0.0.0.0}"
 
 echo "==> Parando FastAPI legado (license-server) se estiver ativo"
 docker compose stop license-server 2>/dev/null || true
