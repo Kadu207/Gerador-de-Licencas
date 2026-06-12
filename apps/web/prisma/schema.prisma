@@ -1,0 +1,205 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Operator {
+  id           Int      @id @default(autoincrement())
+  username     String   @unique @db.VarChar(64)
+  passwordHash String   @map("password_hash") @db.VarChar(255)
+  nome         String   @default("") @db.VarChar(120)
+  ativo        Boolean  @default(true)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("operators")
+}
+
+model Client {
+  id                 Int       @id @default(autoincrement())
+  parentClientId     Int?      @map("parent_client_id")
+  nome               String    @db.VarChar(200)
+  razaoSocial        String    @default("") @map("razao_social") @db.VarChar(200)
+  documentType       String    @default("cnpj") @map("document_type") @db.VarChar(8)
+  cnpj               String    @default("") @db.VarChar(20)
+  cpf                String    @default("") @db.VarChar(14)
+  email              String    @default("") @db.VarChar(120)
+  email02            String    @default("") @map("email_02") @db.VarChar(120)
+  telefone           String    @default("") @db.VarChar(40)
+  telefone02         String    @default("") @map("telefone_02") @db.VarChar(40)
+  telefone03         String    @default("") @map("telefone_03") @db.VarChar(40)
+  clinicaIdErp       Int?      @map("clinica_id_erp")
+  clinicaIdLab       Int?      @map("clinica_id_lab")
+  contractedProducts String    @default("[]") @map("contracted_products")
+  status             String    @default("active") @db.VarChar(32)
+  notes              String    @default("")
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  parent    Client?         @relation("ClientBranches", fields: [parentClientId], references: [id])
+  branches  Client[]        @relation("ClientBranches")
+  address   ClientAddress?
+  licenses  LicenseRecord[]
+  payments  Payment[]
+
+  @@index([nome])
+  @@index([cnpj])
+  @@map("clients")
+}
+
+model ClientAddress {
+  id          Int    @id @default(autoincrement())
+  clientId    Int    @unique @map("client_id")
+  logradouro  String @default("") @db.VarChar(200)
+  numero      String @default("") @db.VarChar(20)
+  complemento String @default("") @db.VarChar(100)
+  bairro      String @default("") @db.VarChar(100)
+  cidade      String @default("") @db.VarChar(100)
+  uf          String @default("") @db.VarChar(2)
+  cep         String @default("") @db.VarChar(10)
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@map("client_addresses")
+}
+
+model LicenseRecord {
+  id             Int       @id @default(autoincrement())
+  clientId       Int       @map("client_id")
+  licenseKey     String    @unique @map("license_key") @db.VarChar(25)
+  produto        String    @db.VarChar(32)
+  periodo        String    @db.VarChar(16)
+  paymentPlan    String    @default("annual") @map("payment_plan") @db.VarChar(16)
+  paymentStatus  String    @default("active") @map("payment_status") @db.VarChar(32)
+  startsAt       DateTime? @map("starts_at") @db.Timestamptz(6)
+  endsAt         DateTime? @map("ends_at") @db.Timestamptz(6)
+  paymentDueAt   DateTime? @map("payment_due_at") @db.Timestamptz(6)
+  manualStatus   String    @default("active") @map("manual_status") @db.VarChar(32)
+  labSecret      String?   @map("lab_secret") @db.VarChar(128)
+  erpSyncedAt    DateTime? @map("erp_synced_at") @db.Timestamptz(6)
+  labSyncedAt    DateTime? @map("lab_synced_at") @db.Timestamptz(6)
+  unidadeId      String?   @map("unidade_id") @db.VarChar(64)
+  installationId String?   @map("installation_id") @db.VarChar(128)
+  revokedAt      DateTime? @map("revoked_at") @db.Timestamptz(6)
+  revokedBy      String?   @map("revoked_by") @db.VarChar(64)
+  createdBy      String    @default("") @map("created_by") @db.VarChar(64)
+  notes          String    @default("")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  client    Client            @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  alertLogs LicenseAlertLog[]
+  payments  Payment[]
+
+  @@index([clientId])
+  @@index([licenseKey])
+  @@map("license_records")
+}
+
+model SoftwareProduct {
+  id             Int            @id @default(autoincrement())
+  slug           String         @unique @db.VarChar(32)
+  name           String         @db.VarChar(160)
+  description    String         @default("")
+  status         String         @default("active") @db.VarChar(24)
+  sortOrder      Int            @default(0) @map("sort_order")
+  licenseEnabled Boolean        @default(true) @map("license_enabled")
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  plans          SoftwarePlan[]
+
+  @@map("software_products")
+}
+
+model SoftwarePlan {
+  id            Int             @id @default(autoincrement())
+  productId     Int             @map("product_id")
+  name          String          @db.VarChar(120)
+  billingPeriod String          @default("annual") @map("billing_period") @db.VarChar(24)
+  price         Decimal         @default(0) @db.Decimal(12, 2)
+  description   String          @default("")
+  sortOrder     Int             @default(0) @map("sort_order")
+  active        Boolean         @default(true)
+  createdAt     DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  product       SoftwareProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("software_plans")
+}
+
+model LicenseAlertLog {
+  id            Int           @id @default(autoincrement())
+  licenseId     Int           @map("license_id")
+  milestoneDays Int           @map("milestone_days")
+  channel       String        @default("email") @db.VarChar(16)
+  sentAt        DateTime      @default(now()) @map("sent_at") @db.Timestamptz(6)
+  license       LicenseRecord @relation(fields: [licenseId], references: [id], onDelete: Cascade)
+
+  @@unique([licenseId, milestoneDays], name: "uq_alert_milestone")
+  @@map("license_alert_log")
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  title     String   @db.VarChar(200)
+  message   String   @default("")
+  level     String   @default("info") @db.VarChar(16)
+  licenseId Int?     @map("license_id")
+  clientId  Int?     @map("client_id")
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("notifications")
+}
+
+model Payment {
+  id                    Int            @id @default(autoincrement())
+  clientId              Int            @map("client_id")
+  licenseId             Int?           @map("license_id")
+  stripeSessionId       String?        @map("stripe_session_id") @db.VarChar(128)
+  stripePaymentIntentId String?        @map("stripe_payment_intent_id") @db.VarChar(128)
+  amount                Decimal        @default(0) @db.Decimal(12, 2)
+  currency              String         @default("brl") @db.VarChar(8)
+  paymentMethod         String         @default("") @map("payment_method") @db.VarChar(32)
+  paymentPlan           String         @default("annual") @map("payment_plan") @db.VarChar(16)
+  status                String         @default("pending") @db.VarChar(32)
+  createdAt             DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  completedAt           DateTime?      @map("completed_at") @db.Timestamptz(6)
+  client                Client         @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  license               LicenseRecord? @relation(fields: [licenseId], references: [id])
+  invoices              InvoiceNfse[]
+
+  @@index([clientId])
+  @@index([stripeSessionId])
+  @@map("payments")
+}
+
+model InvoiceNfse {
+  id              Int      @id @default(autoincrement())
+  clientId        Int      @map("client_id")
+  paymentId       Int?     @map("payment_id")
+  numero          String   @default("") @db.VarChar(32)
+  protocolo       String   @default("") @db.VarChar(64)
+  verificationUrl String   @default("") @map("verification_url") @db.VarChar(512)
+  xmlContent      String   @default("") @map("xml_content")
+  pdfPath         String   @default("") @map("pdf_path") @db.VarChar(512)
+  status          String   @default("pending") @db.VarChar(32)
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  payment         Payment? @relation(fields: [paymentId], references: [id])
+
+  @@map("invoices_nfse")
+}
+
+model AuditLog {
+  id            Int      @id @default(autoincrement())
+  operator      String   @default("") @db.VarChar(64)
+  action        String   @default("") @db.VarChar(64)
+  detail        String   @default("")
+  ipAddress     String   @default("") @map("ip_address") @db.VarChar(45)
+  correlationId String   @default("") @map("correlation_id") @db.VarChar(64)
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("audit_logs")
+}

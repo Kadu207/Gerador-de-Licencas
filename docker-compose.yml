@@ -24,9 +24,24 @@ services:
       retries: 8
       start_period: 10s
 
+  license-web:
+    build: ./apps/web
+    container_name: gerenciador-licencas-web
+    restart: unless-stopped
+    depends_on:
+      license-db:
+        condition: service_healthy
+    env_file: apps/web/.env
+    environment:
+      DATABASE_URL: postgresql://licencas:${POSTGRES_APP_PASSWORD}@license-db:5432/licencas_db
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-https://licencas.inovatitech.com.br}
+    ports:
+      - "127.0.0.1:${LICENSE_WEB_PORT:-3000}:3000"
+
   license-server:
     build: .
     container_name: gerador-licencas
+    profiles: ["legacy"]
     restart: unless-stopped
     depends_on:
       license-db:

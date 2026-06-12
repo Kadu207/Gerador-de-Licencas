@@ -42,11 +42,23 @@
 - [ ] Credenciais/documentação usuário
 - [ ] Homologação NFS-e
 
+## Fase Next.js (v2) ✅
+- [x] `apps/web` Next.js 16 + Prisma 6 + Postgres
+- [x] `src/domain/licensing.ts` portado + Vitest (7 testes)
+- [x] API `/api/v1/licenses/*` (validate, activate, status, heartbeat, revoke)
+- [x] Painel dvh: landing, login, dashboard, clients, finance, catalog
+- [x] Gerenciador financeiro + Stripe webhook
+- [x] Job alertas `POST /api/cron/alerts`
+- [x] Docker `license-web` + nginx porta 3000
+- [x] CI GitHub Actions `web-ci.yml`
+- [x] `npm run build` verde
+
 ## Fase 6 ✅
 - [x] Landing responsiva
 - [x] Deploy VPS docs
 - [ ] Push GitHub kadu207 (requer auth usuário)
-- [x] Testes E2E pytest
+- [x] Testes E2E pytest (FastAPI legado)
+- [x] Testes Vitest (Next.js)
 
 ## E2E manual produção
 

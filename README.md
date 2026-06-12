@@ -13,24 +13,38 @@ Servidor central de licenciamento para **Excellence Dental Cloud**, **Dental Lab
 - Postgres dedicado em produção
 - Landing pública responsiva
 
-## Instalação rápida
+## Instalação rápida (Next.js — recomendado)
 
 ```powershell
-cd "Gerador de Licenças"
+cd "Gerador de Licenças\apps\web"
 Copy-Item .env.example .env
-python -m venv .venv
-.\.venv\Scripts\pip install -r requirements.txt
-.\run.ps1
+# Edite DATABASE_URL, SECRET_KEY, ADMIN_PASSWORD, PRODUCT_API_KEY
+npm install
+npm run dev
 ```
 
-Acesse http://127.0.0.1:8195 — landing pública; painel em `/app/login`.
+- Landing: http://127.0.0.1:3000
+- Painel: http://127.0.0.1:3000/login
+- API: http://127.0.0.1:3000/api/v1/licenses/*
+- Testes TDD: `npm test`
 
 ## Docker + Postgres
 
 ```bash
 cp .env.example .env
-docker compose up -d --build
-curl http://127.0.0.1:8195/health
+cp apps/web/.env.example apps/web/.env
+docker compose up -d license-db license-web --build
+curl http://127.0.0.1:3000/api/health
+```
+
+FastAPI legado (opcional): `docker compose --profile legacy up -d license-server`
+
+## Instalação FastAPI legado
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\pip install -r requirements.txt
+.\run.ps1
 ```
 
 ## Produção
@@ -43,6 +57,20 @@ curl http://127.0.0.1:8195/health
 
 ```bash
 pytest tests/ -v
+```
+
+## Banco: backup e migracao segura
+
+```bash
+bash scripts/db_backup.sh
+bash scripts/db_migrate_safe.sh
+```
+
+No PowerShell:
+
+```powershell
+.\scripts\db_backup.ps1
+.\scripts\db_migrate_safe.ps1
 ```
 
 ## GitHub

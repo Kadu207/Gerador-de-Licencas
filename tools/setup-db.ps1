@@ -8,7 +8,10 @@ if (-not (Test-Path ".env")) {
 }
 
 Write-Host "Recriando Postgres (volume limpo)..."
-docker compose down -v 2>$null
+$prevEap = $ErrorActionPreference
+$ErrorActionPreference = "Continue"
+docker compose down -v *> $null
+$ErrorActionPreference = $prevEap
 docker compose up -d license-db
 
 Write-Host "Aguardando Postgres..."
