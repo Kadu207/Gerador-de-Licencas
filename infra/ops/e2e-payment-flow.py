@@ -26,6 +26,7 @@ def psql(sql: str) -> str:
         "licencas",
         "-d",
         "licencas_db",
+        "-q",
         "-v",
         "ON_ERROR_STOP=1",
         "-t",
@@ -33,7 +34,8 @@ def psql(sql: str) -> str:
         "-c",
         sql,
     ]
-    return subprocess.check_output(cmd, text=True).strip()
+    out = subprocess.check_output(cmd, text=True).strip()
+    return out.splitlines()[0].strip() if out else ""
 
 
 def read_env_value(path: str, key: str) -> str:
