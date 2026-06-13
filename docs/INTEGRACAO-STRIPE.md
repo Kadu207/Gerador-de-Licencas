@@ -69,4 +69,5 @@ stripe listen --forward-to localhost:3000/api/stripe/webhook
 - [ ] Webhook Live apontando para `/api/stripe/webhook`
 - [ ] PIX/boleto habilitados no Dashboard Brasil
 - [ ] `bash infra/ops/stripe-prod-check.sh` sem falhas
+- [ ] `bash infra/ops/e2e-payment-flow.sh` — teste ponta-a-ponta (licença + webhook simulado)
 - [ ] Teste real com valor baixo em produção
