@@ -36,8 +36,8 @@ set +a
 echo "==> Build e subida (license-db + license-web na porta ${LICENSE_WEB_PORT})"
 docker compose up -d license-db license-web --build
 
-echo "==> Prisma schema (idempotente)"
-docker compose exec -T license-web node ./node_modules/prisma/build/index.js db push
+echo "==> Schema Postgres (SQL idempotente)"
+docker exec -i licencas-db psql -U licencas -d licencas_db < "$APP_DIR/infra/ops/schema-sync.sql"
 
 echo "==> Health local"
 for i in $(seq 1 30); do
