@@ -1,7 +1,9 @@
 import { SignJWT, jwtVerify } from "jose";
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { config } from "@/lib/config";
+import { isMasterRole } from "@/lib/roles";
 
 const ALGORITHM = "HS256";
 const COOKIE_NAME = "session_token";
@@ -68,4 +70,17 @@ export async function requireOperator() {
   if (!username) return null;
   const { prisma } = await import("@/lib/prisma");
   return prisma.operator.findFirst({ where: { username, ativo: true } });
+}
+
+export async function requireMaster() {
+  const operator = await requireOperator();
+  if (!operator) return null;
+  if (!isMasterRole(operator.role)) return null;
+  return operator;
+}
+
+export async function requireMasterOrRedirect() {
+  const operator = await requireMaster();
+  if (!operator) redirect("/dashboard?error=acesso");
+  return operator;
 }

@@ -19,7 +19,7 @@ export default async function DashboardPage() {
   ]);
 
   return (
-    <AppShell user={operator.username}>
+    <AppShell user={operator.username} role={operator.role}>
       <h1 className="text-2xl font-bold">Dashboard</h1>
       <p className="text-muted">Visão operacional do gerenciador de licenças.</p>
 

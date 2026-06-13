@@ -1,16 +1,15 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
-import { requireOperator } from "@/lib/auth";
+import { requireMasterOrRedirect } from "@/lib/auth";
 import { getFinanceSummary } from "@/lib/services/finance-service";
 
 export default async function FinancePage() {
-  const operator = await requireOperator();
-  if (!operator) redirect("/login");
+  const operator = await requireMasterOrRedirect();
 
   const finance = await getFinanceSummary();
 
   return (
-    <AppShell user={operator.username}>
+    <AppShell user={operator.username} role={operator.role}>
       <h1 className="text-2xl font-bold">Gerenciador financeiro</h1>
       <p className="text-muted">
         Cobranças Stripe (cartão, PIX, boleto via Dashboard Brasil) vinculadas às licenças emitidas.

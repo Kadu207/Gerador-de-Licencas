@@ -18,7 +18,7 @@ export default async function CatalogPage() {
   const products = await listCatalog();
 
   return (
-    <AppShell user={operator.username}>
+    <AppShell user={operator.username} role={operator.role}>
       <h1 className="text-2xl font-bold">Catálogo de produtos</h1>
       <p className="text-muted">
         Portfólio Inova TI — sites, SaaS e softwares sob licenciamento. Novos produtos podem ser adicionados conforme

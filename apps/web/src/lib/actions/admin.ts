@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireOperator } from "@/lib/auth";
+import { canCreateCheckout, canRevokeLicense } from "@/lib/roles";
 import { issueLicense, renewLicense, revokeLicense } from "@/lib/services/license-service";
 import { createCheckoutSession } from "@/lib/services/finance-service";
 import { ensureBootstrap } from "@/lib/bootstrap";
@@ -82,6 +83,7 @@ export async function renewLicenseAction(formData: FormData) {
 export async function revokeLicenseAction(formData: FormData) {
   const operator = await requireOperator();
   if (!operator) redirect("/login");
+  if (!canRevokeLicense(operator.role)) redirect("/dashboard?error=acesso");
 
   const licenseId = Number(formData.get("license_id"));
   const lic = await revokeLicense({
@@ -96,6 +98,7 @@ export async function revokeLicenseAction(formData: FormData) {
 export async function checkoutAction(formData: FormData) {
   const operator = await requireOperator();
   if (!operator) redirect("/login");
+  if (!canCreateCheckout(operator.role)) redirect("/dashboard?error=acesso");
 
   const result = await createCheckoutSession({
     operator: operator.username,

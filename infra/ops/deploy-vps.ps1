@@ -2,12 +2,14 @@
 # Uso:
 #   powershell -ExecutionPolicy Bypass -File infra/ops/deploy-vps.ps1
 #   powershell -ExecutionPolicy Bypass -File infra/ops/deploy-vps.ps1 -SkipPush
+#   powershell -ExecutionPolicy Bypass -File infra/ops/deploy-vps.ps1 -SkipCommit
 #
 # Pre-requisito SSH: chave em gestaoti@128.140.77.31 (BatchMode)
 
 param(
   [switch]$SkipPush,
   [switch]$SkipCommit,
+  [switch]$AutoCommit,
   [string]$Branch = "main",
   [string]$VpsHost = "128.140.77.31",
   [string]$SshUser = "gestaoti",
@@ -21,38 +23,46 @@ $SshTarget = "$SshUser@$VpsHost"
 
 function Log([string]$msg) { Write-Host "==> $msg" -ForegroundColor Cyan }
 
+function Invoke-Git {
+  param([Parameter(ValueFromRemainingArguments = $true)][string[]]$Args)
+  $prev = $ErrorActionPreference
+  $ErrorActionPreference = "Continue"
+  & git @Args 2>&1 | ForEach-Object {
+    if ($_ -is [System.Management.Automation.ErrorRecord]) {
+      $text = $_.ToString()
+      if ($text -match '^(fatal|error):') { throw $text }
+      Write-Host $text
+    } else {
+      Write-Host $_
+    }
+  }
+  if ($LASTEXITCODE -ne 0) { throw "git $($Args -join ' ') falhou (exit $LASTEXITCODE)" }
+  $ErrorActionPreference = $prev
+}
+
 Set-Location $RepoRoot
 
 if (-not $SkipCommit) {
-  $dirty = git status --porcelain
+  $dirty = Invoke-Git status --porcelain
   if ($dirty) {
-    Log "Ha alteracoes nao commitadas. Commitando automaticamente para deploy..."
-    git add apps/ infra/ops/ tools/ run-web.ps1 docker-compose.yml README.md docs/PREMISSAS.md specs/001-gerenciador-licencas/tasks.md .github/workflows/web-ci.yml .env.example requirements.txt scripts/ 2>$null
-    git add -u
-    git commit -m @"
-Deploy Next.js v2: login server action, sync env e scripts VPS.
-
-Inclui apps/web completo, deploy-vps atualizado para porta 3000 e correcoes de autenticacao no painel admin.
-"@
+    if (-not $AutoCommit) {
+      Write-Host "Ha alteracoes locais nao commitadas. Use -SkipCommit para deploy sem commit ou -AutoCommit para commitar automaticamente." -ForegroundColor Yellow
+      Invoke-Git status --short
+      exit 1
+    }
+    Log "Commit automatico para deploy..."
+    Invoke-Git add apps/ infra/ops/ tools/sync-web-env.ps1 tools/sync_web_env.py run-web.ps1 docker-compose.yml
+    Invoke-Git commit -m "Deploy: atualiza app e scripts de publicacao VPS."
   }
 }
 
 if (-not $SkipPush) {
   Log "git push origin $Branch"
-  git push -u origin $Branch
+  Invoke-Git push -u origin $Branch
 }
 
 Log "SSH deploy em ${SshTarget}:${RemoteDir}"
-$remoteCmd = @"
-set -euo pipefail
-cd '$RemoteDir'
-if [[ -d .git ]]; then
-  git fetch origin
-  git checkout '$Branch' 2>/dev/null || git checkout -b '$Branch' origin/'$Branch'
-  git pull --ff-only origin '$Branch' || git pull --ff-only
-fi
-bash infra/ops/deploy-vps.sh
-"@
+$remoteCmd = "set -euo pipefail; cd '$RemoteDir'; if [[ -d .git ]]; then git fetch origin; git checkout '$Branch' 2>/dev/null || git checkout -b '$Branch' origin/'$Branch'; git pull --ff-only origin '$Branch' || git pull --ff-only; fi; bash infra/ops/deploy-vps.sh"
 
 ssh -i $SshKey -o BatchMode=yes -o ConnectTimeout=20 -o IdentitiesOnly=yes $SshTarget $remoteCmd
 

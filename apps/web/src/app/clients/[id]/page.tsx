@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { PERIOD_LABELS, PRODUCT_LABELS } from "@/domain/licensing";
 import { effectiveForLicense } from "@/lib/services/license-service";
 import { issueLicenseAction, renewLicenseAction, revokeLicenseAction, checkoutAction } from "@/lib/actions/admin";
+import { canCreateCheckout, canRevokeLicense } from "@/lib/roles";
 import { listCatalog } from "@/lib/services/catalog-service";
 
 export default async function ClientDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -24,9 +25,11 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
 
   const catalog = await listCatalog();
   const licensable = catalog.filter((p) => p.licenseEnabled);
+  const masterActions = canRevokeLicense(operator.role);
+  const canCheckout = canCreateCheckout(operator.role);
 
   return (
-    <AppShell user={operator.username}>
+    <AppShell user={operator.username} role={operator.role}>
       <h1 className="text-2xl font-bold">{client.nome}</h1>
       <p className="text-muted">
         {client.documentType === "cpf" ? `CPF ${client.cpf}` : `CNPJ ${client.cnpj}`} · Status: {client.status}
@@ -122,26 +125,30 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                           Renovar
                         </button>
                       </form>
-                      <form action={checkoutAction} className="flex gap-2">
-                        <input type="hidden" name="client_id" value={client.id} />
-                        <input type="hidden" name="license_id" value={lic.id} />
-                        <input type="hidden" name="produto" value={lic.produto} />
-                        <select name="payment_plan" className="input-field !w-auto">
-                          <option value="monthly">Mensal</option>
-                          <option value="semiannual">Semestral</option>
-                          <option value="annual">Anual</option>
-                        </select>
-                        <button type="submit" className="btn btn-secondary">
-                          Link pagamento
-                        </button>
-                      </form>
-                      <form action={revokeLicenseAction}>
-                        <input type="hidden" name="license_id" value={lic.id} />
-                        <input type="hidden" name="reason" value="Revogação manual" />
-                        <button type="submit" className="btn btn-danger">
-                          Revogar
-                        </button>
-                      </form>
+                      {canCheckout && (
+                        <form action={checkoutAction} className="flex gap-2">
+                          <input type="hidden" name="client_id" value={client.id} />
+                          <input type="hidden" name="license_id" value={lic.id} />
+                          <input type="hidden" name="produto" value={lic.produto} />
+                          <select name="payment_plan" className="input-field !w-auto">
+                            <option value="monthly">Mensal</option>
+                            <option value="semiannual">Semestral</option>
+                            <option value="annual">Anual</option>
+                          </select>
+                          <button type="submit" className="btn btn-secondary">
+                            Link pagamento
+                          </button>
+                        </form>
+                      )}
+                      {masterActions && (
+                        <form action={revokeLicenseAction}>
+                          <input type="hidden" name="license_id" value={lic.id} />
+                          <input type="hidden" name="reason" value="Revogação manual" />
+                          <button type="submit" className="btn btn-danger">
+                            Revogar
+                          </button>
+                        </form>
+                      )}
                     </div>
                   </td>
                 </tr>

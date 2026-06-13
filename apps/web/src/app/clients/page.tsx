@@ -17,7 +17,7 @@ export default async function ClientsPage() {
   ]);
 
   return (
-    <AppShell user={operator.username}>
+    <AppShell user={operator.username} role={operator.role}>
       <h1 className="text-2xl font-bold">Clientes</h1>
       <p className="text-muted">Cadastro completo com CPF/CNPJ, endereço ViaCEP e matriz/filial.</p>
 
