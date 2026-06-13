@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { verifyProductApiKey } from "@/lib/api-auth";
 import { isValidLicenseKeyFormat, normalizeLicenseKey } from "@/domain/licensing";
-import { effectiveForLicense, findLicenseByKey, licenseStatusPayload } from "@/lib/services/license-service";
+import { effectiveForLicense, findLicenseByKey } from "@/lib/services/license-service";
 
 export async function GET(req: NextRequest) {
   if (!verifyProductApiKey(req.headers.get("x-license-api-key"))) {
@@ -13,12 +13,19 @@ export async function GET(req: NextRequest) {
     return Response.json({ detail: "INVALID_LICENSE_KEY" }, { status: 422 });
   }
 
-  const { lic, client } = await findLicenseByKey(key);
-  if (!lic) return Response.json({ detail: "LICENSE_NOT_FOUND" }, { status: 404 });
+  const { lic } = await findLicenseByKey(key);
+  if (!lic) {
+    return Response.json({ valid: false, blocked: true, reason: "LICENSE_NOT_FOUND" });
+  }
 
   const effective = effectiveForLicense(lic);
+  const valid = effective.validForSoftware;
   return Response.json({
-    ok: true,
-    ...licenseStatusPayload(lic, client, effective),
+    valid,
+    blocked: !valid,
+    licenseExpired: effective.licenseExpired,
+    paymentPhase: effective.paymentPhase,
+    daysRemaining: effective.daysRemaining,
+    alertLevel: effective.alertLevel,
   });
 }

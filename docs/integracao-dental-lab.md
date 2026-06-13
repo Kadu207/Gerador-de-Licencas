@@ -7,6 +7,11 @@ LICENSE_SERVER_URL=https://licencas.inovatitech.com.br
 LICENSE_API_KEY=sua-chave-produto
 ```
 
+## Escopo de `clinica_id`
+
+- **Lab:** `clinica_id` corresponde ao ID do laboratório (`clinica_id_lab` no gerenciador).
+- Na ativação, o gerenciador grava `clinica_id_lab` se ainda vazio.
+
 ## Endpoints usados
 
 - `POST /validate` — product=`lab`

@@ -33,6 +33,8 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
       <h1 className="text-2xl font-bold">{client.nome}</h1>
       <p className="text-muted">
         {client.documentType === "cpf" ? `CPF ${client.cpf}` : `CNPJ ${client.cnpj}`} · Status: {client.status}
+        {client.clinicaIdErp ? ` · ERP #${client.clinicaIdErp}` : ""}
+        {client.clinicaIdLab ? ` · Lab #${client.clinicaIdLab}` : ""}
       </p>
 
       {client.address && (

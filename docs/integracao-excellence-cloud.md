@@ -7,6 +7,11 @@ LICENSE_SERVER_URL=https://licencas.inovatitech.com.br
 LICENSE_API_KEY=sua-chave-produto
 ```
 
+## Escopo de `clinica_id`
+
+- **Cloud / VDE:** `clinica_id` corresponde ao ID da clínica no ERP (`clinica_id_erp` no gerenciador).
+- Na ativação, o gerenciador grava `clinica_id_erp` se ainda vazio.
+
 ## Cliente HTTP (Python)
 
 ```python

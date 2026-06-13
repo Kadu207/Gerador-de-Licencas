@@ -1,62 +1,72 @@
-# Integração Stripe — Gerenciador de Licenças
+# Integração Stripe — Gerenciador de Licenças (Next.js v2)
 
-## Configuração
+## Configuração na VPS (`/opt/gerador-licencas/.env`)
 
 ```env
 STRIPE_SECRET_KEY=rk_live_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 PUBLIC_BASE_URL=https://licencas.inovatitech.com.br
-STRIPE_CURRENCY=brl
 ```
 
-### Passo 3 — tipo de chave no Dashboard Stripe
+Após editar o `.env` raiz:
+
+```bash
+bash infra/ops/provision-web-env.sh
+docker compose up -d license-web --build
+bash infra/ops/stripe-prod-check.sh
+```
+
+### Tipo de chave no Dashboard Stripe
 
 Escolha: **Alimentando uma integração que você criou**
 
-O Gerador de Licenças é código próprio (FastAPI) que chama a API Stripe via `STRIPE_SECRET_KEY`.  
-Não use “aplicativo de terceiros” nem “agente de IA” para esta chave de produção.
-
-Prefira **Restricted key** (`rk_test_` / `rk_live_`) com permissão **Checkout Sessions → Write**.
+Prefira **Restricted key** (`rk_live_`) com permissão **Checkout Sessions → Write**.
 
 ## Métodos de pagamento
 
 Configure PIX, boleto e cartão no **Stripe Dashboard Brasil** via Payment Method Configurations.  
 **Não** fixe `payment_method_types` no código.
 
-## Preços por sistema (Portfólio de sistemas)
+## Preços
 
-Os valores são editados em **Admin → Portfólio de sistemas → Planos e custos**.  
-O Checkout Stripe e a landing pública leem os mesmos preços do catálogo.
+Edite em **Financeiro** no painel (master) ou na tabela `software_plans`.
 
 | Sistema | Mensal | Semestral | Anual |
 |---------|--------|-----------|-------|
-| **Dental Lab** | R$ 299,00 | R$ 1.599,00 | R$ 2.999,00 |
-| **Excellence Dental Cloud** | R$ 497,00 | R$ 2.486,00 | R$ 4.970,00 |
+| **Dental Lab** | R$ 299 | R$ 1.599 | R$ 2.999 |
+| **Excellence Dental Cloud** | R$ 497 | R$ 2.486 | R$ 4.970 |
 
-Periodicidade no catálogo: `monthly`, `semiannual`, `annual` (vinculadas aos planos de pagamento da licença).
+## Webhook (produção)
 
-## Webhook
+| Item | Valor |
+|------|-------|
+| URL | `POST https://licencas.inovatitech.com.br/api/stripe/webhook` |
+| Evento | `checkout.session.completed` |
 
-Endpoint: `POST https://licencas.inovatitech.com.br/webhooks/stripe`
+Ao confirmar pagamento o sistema:
 
-Evento: `checkout.session.completed`
+1. Marca `payments.status = completed`
+2. Renova a licença vinculada (`ends_at` + `payment_due_at` conforme plano mensal/semestral/anual)
 
-## Fluxo
+## Fluxo operacional
 
-1. Operador clica **Link Stripe** no detalhe do cliente (valor conforme sistema + plano)
-2. Cliente paga via Checkout
-3. Webhook confirma → pagamento `completed`, `payment_status=active`
+1. Operador master gera licença no cliente
+2. Clica **Link pagamento** (Stripe Checkout)
+3. Cliente paga
+4. Webhook confirma → licença estendida automaticamente
+
+Pagamentos offline: **Financeiro → Marcar pago** (master).
 
 ## Teste local
 
 ```bash
-stripe listen --forward-to localhost:8195/webhooks/stripe
+stripe listen --forward-to localhost:3000/api/stripe/webhook
 ```
 
-## Deploy — aplicar preços no banco
+## Go-live checklist
 
-```bash
-docker compose exec license-server python docker/ensure_migrations.py
-```
-
-A migration `003_commercial_plan_prices` atualiza Cloud e Lab na VPS existente.
+- [ ] `STRIPE_SECRET_KEY` e `STRIPE_WEBHOOK_SECRET` no `.env` da VPS
+- [ ] Webhook Live apontando para `/api/stripe/webhook`
+- [ ] PIX/boleto habilitados no Dashboard Brasil
+- [ ] `bash infra/ops/stripe-prod-check.sh` sem falhas
+- [ ] Teste real com valor baixo em produção

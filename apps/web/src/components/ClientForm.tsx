@@ -76,6 +76,26 @@ export function ClientForm({ parents }: { parents: { id: number; nome: string }[
         </select>
       </div>
       <div>
+        <label className="mb-1 block text-sm font-medium">ID clínica ERP (Cloud)</label>
+        <input
+          name="clinica_id_erp"
+          type="number"
+          min={1}
+          className="input-field"
+          placeholder="Opcional — vincula Excellence Dental Cloud"
+        />
+      </div>
+      <div>
+        <label className="mb-1 block text-sm font-medium">ID clínica Lab</label>
+        <input
+          name="clinica_id_lab"
+          type="number"
+          min={1}
+          className="input-field"
+          placeholder="Opcional — vincula Dental Lab"
+        />
+      </div>
+      <div>
         <label className="mb-1 block text-sm font-medium">CEP</label>
         <input
           name="cep"

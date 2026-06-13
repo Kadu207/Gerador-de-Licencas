@@ -11,6 +11,7 @@ import {
   productMatchesLicense,
 } from "@/domain/licensing";
 import { effectiveForLicense, findLicenseByKey, licenseStatusPayload } from "@/lib/services/license-service";
+import { boundToOtherScope, clinicaBindingField } from "@/lib/services/license-scope";
 
 export async function POST(req: NextRequest) {
   if (!verifyProductApiKey(req.headers.get("x-license-api-key"))) {
@@ -34,7 +35,7 @@ export async function POST(req: NextRequest) {
   }
 
   const clinicaId = Number(body.clinica_id);
-  if (client?.clinicaIdLab && client.clinicaIdLab !== clinicaId) {
+  if (boundToOtherScope(lic, client, clinicaId, body.unidade_id, product)) {
     return Response.json({ detail: "LICENSE_ALREADY_USED" }, { status: 409 });
   }
 
@@ -47,12 +48,19 @@ export async function POST(req: NextRequest) {
       unidadeId: lic.unidadeId || scopeUid,
     },
   });
-  if (client && !client.clinicaIdLab) {
-    await prisma.client.update({ where: { id: client.id }, data: { clinicaIdLab: clinicaId } });
+
+  if (client) {
+    const field = clinicaBindingField(product);
+    if (!client[field]) {
+      await prisma.client.update({
+        where: { id: client.id },
+        data: { [field]: clinicaId },
+      });
+    }
   }
 
   const updated = await prisma.licenseRecord.findUnique({ where: { id: lic.id } });
-  const refreshedClient = await prisma.client.findUnique({ where: { id: lic!.clientId } });
+  const refreshedClient = await prisma.client.findUnique({ where: { id: lic.clientId } });
   const effective = effectiveForLicense(updated!);
   return Response.json({ msg: "OK", licenca: licenseStatusPayload(updated!, refreshedClient, effective) });
 }

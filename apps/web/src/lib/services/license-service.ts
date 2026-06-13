@@ -177,3 +177,45 @@ export async function findLicenseByKey(key: string) {
   const client = await prisma.client.findUnique({ where: { id: lic.clientId } });
   return { lic, client };
 }
+
+const PAYMENT_PLAN_RENEWAL_DAYS: Record<string, number> = {
+  monthly: 30,
+  semiannual: 183,
+  annual: 365,
+};
+
+/** Estende validade técnica e cobrança após pagamento confirmado. */
+export async function extendLicenseAfterPayment(params: {
+  licenseId: number;
+  paymentPlan: string;
+  operator: string;
+}) {
+  const lic = await prisma.licenseRecord.findUnique({ where: { id: params.licenseId } });
+  if (!lic) return null;
+
+  const days = PAYMENT_PLAN_RENEWAL_DAYS[params.paymentPlan] ?? 365;
+  const ref = nowUtc();
+  const currentEnd = lic.endsAt && lic.endsAt > ref ? lic.endsAt : ref;
+  const newEnd = new Date(currentEnd.getTime() + days * 24 * 60 * 60 * 1000);
+
+  const updated = await prisma.licenseRecord.update({
+    where: { id: lic.id },
+    data: {
+      endsAt: newEnd,
+      paymentDueAt: newEnd,
+      paymentPlan: params.paymentPlan,
+      manualStatus: STATUS_ACTIVE,
+      paymentStatus: STATUS_ACTIVE,
+    },
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      operator: params.operator,
+      action: "license_payment_renew",
+      detail: `${lic.licenseKey} +${days}d (${params.paymentPlan})`,
+    },
+  });
+
+  return updated;
+}

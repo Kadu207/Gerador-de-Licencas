@@ -7,6 +7,7 @@ import {
   productMatchesLicense,
 } from "@/domain/licensing";
 import { effectiveForLicense, findLicenseByKey, licenseStatusPayload } from "@/lib/services/license-service";
+import { boundToOtherScope } from "@/lib/services/license-scope";
 
 export async function POST(req: NextRequest) {
   if (!verifyProductApiKey(req.headers.get("x-license-api-key"))) {
@@ -26,8 +27,7 @@ export async function POST(req: NextRequest) {
     return Response.json({ detail: "LICENSE_PRODUCT_MISMATCH" }, { status: 422 });
   }
 
-  const boundClinica = client?.clinicaIdLab;
-  if (boundClinica && boundClinica !== Number(body.clinica_id)) {
+  if (boundToOtherScope(lic, client, Number(body.clinica_id), body.unidade_id, product)) {
     return Response.json({ detail: "LICENSE_SCOPE_MISMATCH" }, { status: 409 });
   }
 

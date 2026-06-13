@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { verifyProductApiKey } from "@/lib/api-auth";
 import { normalizeLicenseKey } from "@/domain/licensing";
 import { effectiveForLicense, findLicenseByKey, licenseStatusPayload } from "@/lib/services/license-service";
+import { clinicaWhereClause } from "@/lib/services/license-scope";
 
 export async function GET(req: NextRequest) {
   if (!verifyProductApiKey(req.headers.get("x-license-api-key"))) {
@@ -22,6 +23,7 @@ export async function GET(req: NextRequest) {
 
   const clinicaId = Number(searchParams.get("clinica_id"));
   const unidadeId = searchParams.get("unidade_id");
+  const product = searchParams.get("product") ?? "lab";
 
   if (!clinicaId || Number.isNaN(clinicaId)) {
     return Response.json({ detail: "clinica_id obrigatório" }, { status: 422 });
@@ -29,7 +31,7 @@ export async function GET(req: NextRequest) {
 
   const lic = await prisma.licenseRecord.findFirst({
     where: {
-      client: { clinicaIdLab: clinicaId },
+      ...clinicaWhereClause(product, clinicaId),
       ...(unidadeId ? { unidadeId } : { OR: [{ unidadeId: null }, { unidadeId: "" }] }),
     },
     orderBy: { id: "desc" },

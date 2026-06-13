@@ -50,19 +50,31 @@ code="$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE/api/v1/licenses/va
 [[ "$code" == "404" ]] || fail "validate inexistente esperava 404, obteve $code"
 pass "validate 404 não encontrada"
 
-echo "5. Status por clinica_id"
-code="$(curl -s -o /dev/null -w "%{http_code}" "$BASE/api/v1/licenses/status?clinica_id=999999" \
+echo "5. Status Lab por clinica_id"
+code="$(curl -s -o /dev/null -w "%{http_code}" "$BASE/api/v1/licenses/status?clinica_id=999999&product=lab" \
   -H "X-License-Api-Key: $API_KEY")"
-[[ "$code" == "200" ]] || fail "status clinica_id esperava 200, obteve $code"
-pass "status clinica_id"
+[[ "$code" == "200" ]] || fail "status lab esperava 200, obteve $code"
+pass "status lab clinica_id"
 
-echo "6. Heartbeat chave inválida -> 422"
+echo "6. Status Cloud por clinica_id (ERP)"
+code="$(curl -s -o /dev/null -w "%{http_code}" "$BASE/api/v1/licenses/status?clinica_id=999999&product=cloud" \
+  -H "X-License-Api-Key: $API_KEY")"
+[[ "$code" == "200" ]] || fail "status cloud esperava 200, obteve $code"
+pass "status cloud clinica_id"
+
+echo "7. Heartbeat formato Cloud"
+body="$(curl -sf "$BASE/api/v1/licenses/heartbeat?license_key=ZZZZZZZZZZZZZZZZZZZZZZZZZ&product=cloud" \
+  -H "X-License-Api-Key: $API_KEY")"
+echo "$body" | grep -q '"blocked":true' || fail "heartbeat cloud sem blocked"
+pass "heartbeat cloud blocked"
+
+echo "8. Heartbeat chave inválida -> 422"
 code="$(curl -s -o /dev/null -w "%{http_code}" "$BASE/api/v1/licenses/heartbeat?license_key=CURTA" \
   -H "X-License-Api-Key: $API_KEY")"
 [[ "$code" == "422" ]] || fail "heartbeat chave curta esperava 422, obteve $code"
 pass "heartbeat 422"
 
-echo "7. Activate licença inexistente -> 404"
+echo "9. Activate licença inexistente -> 404"
 code="$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE/api/v1/licenses/activate" \
   -H "Content-Type: application/json" -H "X-License-Api-Key: $API_KEY" \
   -d '{"license_key":"ZZZZZZZZZZZZZZZZZZZZZZZZZ","product":"lab","clinica_id":1}')"
