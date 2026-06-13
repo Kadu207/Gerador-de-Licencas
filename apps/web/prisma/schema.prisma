@@ -12,6 +12,7 @@ model Operator {
   username     String   @unique @db.VarChar(64)
   passwordHash String   @map("password_hash") @db.VarChar(255)
   nome         String   @default("") @db.VarChar(120)
+  role         String   @default("operator") @db.VarChar(32)
   ativo        Boolean  @default(true)
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 

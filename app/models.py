@@ -30,6 +30,7 @@ class Operator(Base):
     username = Column(String(64), unique=True, nullable=False, index=True)
     password_hash = Column(String(255), nullable=False)
     nome = Column(String(120), default="")
+    role = Column(String(32), default="operator")
     ativo = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
